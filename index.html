@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concentric Twisting Calculator</title>
+<style>
+/* ── CSS Variables / Theming ───────────────────────────────────── */
+:root {
+  --bg: #f4f5f7;
+  --bg-card: #ffffff;
+  --bg-input: #f0f1f3;
+  --border: #d1d5db;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-light: #dbeafe;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 8px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", Consolas, monospace;
+}
+
+[data-theme="dark"] {
+  --bg: #111827;
+  --bg-card: #1f2937;
+  --bg-input: #374151;
+  --border: #4b5563;
+  --text: #f9fafb;
+  --text-secondary: #9ca3af;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-light: #1e3a5f;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* ── Reset & Base ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+.header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+.header-badge {
+  font-size: 0.7rem;
+  background: var(--accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.header-controls { display: flex; align-items: center; gap: 8px; }
+
+/* ── Toggle Buttons ────────────────────────────────────────────── */
+.toggle-btn {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+.toggle-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* ── Tabs ──────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 12px 24px 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: var(--font);
+}
+
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* ── Main Content ──────────────────────────────────────────────── */
+.main { max-width: 1200px; margin: 0 auto; padding: 20px 24px 40px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Cards ─────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Form Controls ─────────────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+
+.form-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.input-wrap:focus-within { border-color: var(--accent); }
+
+.input-wrap input, .input-wrap select {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  font-family: var(--mono);
+  min-width: 0;
+}
+
+.input-wrap select { cursor: pointer; }
+
+.input-unit {
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--border);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .input-unit { background: #4b5563; }
+
+/* ── Toggle Switch ─────────────────────────────────────────────── */
+.lay-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.lay-toggle button {
+  background: var(--bg-input);
+  border: none;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.2s;
+  font-family: var(--font);
+}
+
+.lay-toggle button.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* ── Results / Output ──────────────────────────────────────────── */
+.result-box {
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.result-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.result-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+.result-detail {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.result-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.result-row .result-box { flex: 1; min-width: 180px; }
+
+/* ── Table ─────────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin-top: 16px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th, td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg-input);
+  position: sticky;
+  top: 0;
+}
+
+td { font-family: var(--mono); font-size: 0.82rem; }
+
+tr:hover td { background: var(--accent-light); }
+
+/* ── SVG Visualizer ────────────────────────────────────────────── */
+.viz-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background: var(--bg-input);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.viz-container svg { max-width: 100%; height: auto; }
+
+.viz-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  justify-content: center;
+}
+
+.viz-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.viz-legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: var(--font);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--bg-input); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--bg-input); }
+
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+/* ── Notifications ─────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--success);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 1000;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .header { padding: 12px 16px; }
+  .header h1 { font-size: 1rem; }
+  .tabs { padding: 8px 16px 0; }
+  .tab { padding: 8px 12px; font-size: 0.8rem; }
+  .main { padding: 16px; }
+  .card { padding: 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .result-value { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>Concentric Twisting Calculator</h1>
+    <span class="header-badge">Harness Assembly</span>
+  </div>
+  <div class="header-controls">
+    <button class="toggle-btn" id="unitToggle" onclick="toggleUnits()">Imperial</button>
+    <button class="toggle-btn" id="themeToggle" onclick="toggleTheme()">Dark</button>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs" id="tabs">
+  <button class="tab active" data-panel="layers" onclick="switchTab(this)">Layer Config</button>
+  <button class="tab" data-panel="laylength" onclick="switchTab(this)">Lay Length</button>
+  <button class="tab" data-panel="elongation" onclick="switchTab(this)">Elongation</button>
+  <button class="tab" data-panel="weight" onclick="switchTab(this)">Weight</button>
+  <button class="tab" data-panel="visualizer" onclick="switchTab(this)">Visualizer</button>
+  <button class="tab" data-panel="export" onclick="switchTab(this)">Export</button>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- ─── 1. LAYER CONFIGURATOR ────────────────────────────────── -->
+  <div class="panel active" id="panel-layers">
+    <div class="card">
+      <div class="card-title">Layer Configurator</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Wire Diameter</label>
+          <div class="input-wrap">
+            <input type="number" id="lc-wireDia" value="1.5" min="0.01" step="0.01" oninput="calcLayers()">
+            <span class="input-unit" id="lc-wireDia-unit">mm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Number of Layers</label>
+          <div class="input-wrap">
+            <input type="number" id="lc-numLayers" value="3" min="1" max="20" step="1" oninput="calcLayers()">
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap" id="lc-table-wrap"></div>
+      <div class="result-row" id="lc-results"></div>
+    </div>
+  </div>
+
+  <!-- ─── 2. LAY LENGTH CALCULATOR ─────────────────────────────── -->
+  <div class="panel" id="panel-laylength">
+    <div class="card">
+      <div class="card-title">Lay Length Calculator</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Wire Diameter</label>
+          <div class="input-wrap">
+            <input type="number" id="ll-wireDia" value="1.5" min="0.01" step="0.01" oninput="calcLayLength()">
+            <span class="input-unit ll-unit">mm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Number of Layers</label>
+          <div class="input-wrap">
+            <input type="number" id="ll-numLayers" value="3" min="1" max="20" step="1" oninput="calcLayLength()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Lay Ratio</label>
+          <div class="input-wrap">
+            <input type="number" id="ll-layRatio" value="15" min="1" max="50" step="0.5" oninput="calcLayLength()">
+            <span class="input-unit">&times; D</span>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap" id="ll-table-wrap"></div>
+    </div>
+  </div>
+
+  <!-- ─── 3. ELONGATION ────────────────────────────────────────── -->
+  <div class="panel" id="panel-elongation">
+    <div class="card">
+      <div class="card-title">Wire Length Increase (Elongation)</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Straight Length</label>
+          <div class="input-wrap">
+            <input type="number" id="el-straightLen" value="1000" min="0.1" step="1" oninput="calcElongation()">
+            <span class="input-unit el-unit">mm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Lay Length (Pitch)</label>
+          <div class="input-wrap">
+            <input type="number" id="el-layLen" value="100" min="0.1" step="1" oninput="calcElongation()">
+            <span class="input-unit el-unit">mm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Bundle Diameter</label>
+          <div class="input-wrap">
+            <input type="number" id="el-bundleDia" value="10" min="0.01" step="0.1" oninput="calcElongation()">
+            <span class="input-unit el-unit">mm</span>
+          </div>
+        </div>
+      </div>
+      <div class="result-row" id="el-results"></div>
+    </div>
+  </div>
+
+  <!-- ─── 4. WEIGHT ESTIMATOR ──────────────────────────────────── -->
+  <div class="panel" id="panel-weight">
+    <div class="card">
+      <div class="card-title">Bundle Weight Estimator</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Wire Outer Diameter</label>
+          <div class="input-wrap">
+            <input type="number" id="wt-wireDia" value="1.5" min="0.01" step="0.01" oninput="calcWeight()">
+            <span class="input-unit wt-unit-dia">mm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Insulation Thickness</label>
+          <div class="input-wrap">
+            <input type="number" id="wt-insThick" value="0.25" min="0" step="0.01" oninput="calcWeight()">
+            <span class="input-unit wt-unit-dia">mm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Conductor Material</label>
+          <div class="input-wrap">
+            <select id="wt-material" onchange="calcWeight()">
+              <option value="copper">Copper (8.96 g/cm&sup3;)</option>
+              <option value="aluminium">Aluminium (2.70 g/cm&sup3;)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Number of Wires</label>
+          <div class="input-wrap">
+            <input type="number" id="wt-wireCount" value="19" min="1" step="1" oninput="calcWeight()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Harness Length</label>
+          <div class="input-wrap">
+            <input type="number" id="wt-length" value="1000" min="0.1" step="1" oninput="calcWeight()">
+            <span class="input-unit wt-unit-len">mm</span>
+          </div>
+        </div>
+      </div>
+      <div class="result-row" id="wt-results"></div>
+    </div>
+  </div>
+
+  <!-- ─── 5. VISUALIZER ────────────────────────────────────────── -->
+  <div class="panel" id="panel-visualizer">
+    <div class="card">
+      <div class="card-title">Cross-Section Visualizer</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Wire Diameter</label>
+          <div class="input-wrap">
+            <input type="number" id="vz-wireDia" value="1.5" min="0.01" step="0.01" oninput="drawVisualization()">
+            <span class="input-unit vz-unit">mm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Number of Layers</label>
+          <div class="input-wrap">
+            <input type="number" id="vz-numLayers" value="3" min="1" max="8" step="1" oninput="drawVisualization()">
+          </div>
+        </div>
+      </div>
+      <div class="viz-container" id="vz-canvas"></div>
+      <div class="viz-legend" id="vz-legend"></div>
+    </div>
+  </div>
+
+  <!-- ─── 6. EXPORT ────────────────────────────────────────────── -->
+  <div class="panel" id="panel-export">
+    <div class="card">
+      <div class="card-title">Results Summary &amp; Export</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Wire Diameter</label>
+          <div class="input-wrap">
+            <input type="number" id="ex-wireDia" value="1.5" min="0.01" step="0.01" oninput="buildExportTable()">
+            <span class="input-unit ex-unit">mm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Number of Layers</label>
+          <div class="input-wrap">
+            <input type="number" id="ex-numLayers" value="3" min="1" max="20" step="1" oninput="buildExportTable()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Lay Ratio</label>
+          <div class="input-wrap">
+            <input type="number" id="ex-layRatio" value="15" min="1" max="50" step="0.5" oninput="buildExportTable()">
+            <span class="input-unit">&times; D</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Straight Length</label>
+          <div class="input-wrap">
+            <input type="number" id="ex-straightLen" value="1000" min="0.1" step="1" oninput="buildExportTable()">
+            <span class="input-unit ex-len-unit">mm</span>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap" id="ex-table-wrap"></div>
+      <div class="btn-group">
+        <button class="btn" onclick="exportText()">Copy as Text</button>
+        <button class="btn btn-secondary" onclick="exportCSV()">Copy as CSV</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   STATE
+   ================================================================ */
+let isMetric = true;
+let isDark = false;
+
+/* ================================================================
+   AWG TABLE  (AWG -> mm diameter for common sizes)
+   ================================================================ */
+const AWG_TABLE = {
+  '0000': 11.684, '000': 10.405, '00': 9.266, '0': 8.251,
+  '1': 7.348, '2': 6.544, '3': 5.827, '4': 5.189, '5': 4.621,
+  '6': 4.115, '7': 3.665, '8': 3.264, '9': 2.906, '10': 2.588,
+  '11': 2.305, '12': 2.053, '13': 1.828, '14': 1.628, '15': 1.450,
+  '16': 1.291, '17': 1.150, '18': 1.024, '19': 0.912, '20': 0.812,
+  '21': 0.723, '22': 0.644, '23': 0.573, '24': 0.511, '25': 0.455,
+  '26': 0.405, '27': 0.361, '28': 0.321, '29': 0.286, '30': 0.255,
+};
+
+const LAYER_COLORS = [
+  '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4',
+  '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b',
+  '#6366f1', '#10b981', '#e11d48', '#0ea5e9', '#a855f7',
+  '#84cc16', '#f43f5e', '#06b6d4', '#d946ef', '#facc15'
+];
+
+const DENSITY = { copper: 8.96, aluminium: 2.70 }; // g/cm^3
+const INS_DENSITY = 1.4; // g/cm^3 approximate PVC/XLPE
+
+/* ================================================================
+   UNIT CONVERSION HELPERS
+   ================================================================ */
+function mmToIn(mm) { return mm / 25.4; }
+function inToMm(inch) { return inch * 25.4; }
+function gToOz(g) { return g * 0.03527396; }
+
+function getDisplayValue(mm) {
+  return isMetric ? mm : mmToIn(mm);
+}
+
+function getInputMm(val) {
+  return isMetric ? val : inToMm(val);
+}
+
+function lenUnit() { return isMetric ? 'mm' : 'in'; }
+function diaUnit() { return isMetric ? 'mm' : 'in'; }
+function weightUnit() { return isMetric ? 'g' : 'oz'; }
+function weightPerMUnit() { return isMetric ? 'g/m' : 'oz/ft'; }
+
+/* ================================================================
+   THEME / UNIT TOGGLE
+   ================================================================ */
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
+  document.getElementById('themeToggle').textContent = isDark ? 'Light' : 'Dark';
+}
+
+function toggleUnits() {
+  isMetric = !isMetric;
+  const btn = document.getElementById('unitToggle');
+  btn.textContent = isMetric ? 'Imperial' : 'Metric';
+  btn.classList.toggle('active', !isMetric);
+  updateAllUnits();
+  recalcAll();
+}
+
+function updateAllUnits() {
+  const u = isMetric ? 'mm' : 'in';
+  document.querySelectorAll('.ll-unit, .el-unit, .vz-unit, .ex-unit').forEach(el => el.textContent = u);
+  document.querySelectorAll('.wt-unit-dia').forEach(el => el.textContent = u);
+  document.querySelectorAll('.wt-unit-len').forEach(el => el.textContent = u);
+  document.querySelectorAll('.ex-len-unit').forEach(el => el.textContent = u);
+  document.getElementById('lc-wireDia-unit').textContent = u;
+}
+
+/* ================================================================
+   TAB SWITCHING
+   ================================================================ */
+function switchTab(tabEl) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tabEl.classList.add('active');
+  document.getElementById('panel-' + tabEl.dataset.panel).classList.add('active');
+  recalcAll();
+}
+
+/* ================================================================
+   CORE: CONCENTRIC LAYER RULE  (1-6-12-18-...)
+   ================================================================ */
+function getLayerWireCounts(numLayers) {
+  const layers = [{ layer: 0, wiresInLayer: 1, totalWires: 1 }];
+  let total = 1;
+  for (let i = 1; i <= numLayers; i++) {
+    const wiresInLayer = 6 * i;
+    total += wiresInLayer;
+    layers.push({ layer: i, wiresInLayer, totalWires: total });
+  }
+  return layers;
+}
+
+function bundleOD(wireDia, numLayers) {
+  return wireDia * (1 + 2 * numLayers);
+}
+
+/* ================================================================
+   1. LAYER CONFIGURATOR
+   ================================================================ */
+function calcLayers() {
+  const wireDia = getInputMm(parseFloat(document.getElementById('lc-wireDia').value) || 0);
+  const numLayers = parseInt(document.getElementById('lc-numLayers').value) || 1;
+  const layers = getLayerWireCounts(numLayers);
+  const od = bundleOD(wireDia, numLayers);
+
+  let html = '<table><thead><tr><th>Layer</th><th>Wires in Layer</th><th>Cumulative Wires</th><th>Layer OD (' + diaUnit() + ')</th></tr></thead><tbody>';
+  layers.forEach(l => {
+    const layerOD = bundleOD(wireDia, l.layer);
+    html += '<tr><td>' + (l.layer === 0 ? 'Core' : l.layer) + '</td><td>' + l.wiresInLayer + '</td><td>' + l.totalWires + '</td><td>' + fmt(getDisplayValue(layerOD)) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('lc-table-wrap').innerHTML = html;
+
+  const totalWires = layers[layers.length - 1].totalWires;
+  document.getElementById('lc-results').innerHTML =
+    '<div class="result-box"><div class="result-label">Total Wires</div><div class="result-value">' + totalWires + '</div></div>' +
+    '<div class="result-box"><div class="result-label">Bundle OD</div><div class="result-value">' + fmt(getDisplayValue(od)) + ' ' + diaUnit() + '</div></div>' +
+    '<div class="result-box"><div class="result-label">Wire Diameter</div><div class="result-value">' + fmt(getDisplayValue(wireDia)) + ' ' + diaUnit() + '</div></div>';
+}
+
+/* ================================================================
+   2. LAY LENGTH CALCULATOR
+   ================================================================ */
+// Per-layer lay directions; stored globally and reset when numLayers changes
+let layDirections = {};
+
+function calcLayLength() {
+  const wireDia = getInputMm(parseFloat(document.getElementById('ll-wireDia').value) || 0);
+  const numLayers = parseInt(document.getElementById('ll-numLayers').value) || 1;
+  const layRatio = parseFloat(document.getElementById('ll-layRatio').value) || 15;
+
+  // Init directions (alternating default)
+  for (let i = 1; i <= numLayers; i++) {
+    if (layDirections[i] === undefined) {
+      layDirections[i] = i % 2 === 1 ? 'RH' : 'LH';
+    }
+  }
+
+  let html = '<table><thead><tr><th>Layer</th><th>Wires</th><th>Layer OD (' + diaUnit() + ')</th><th>Lay Length (' + diaUnit() + ')</th><th>Direction</th></tr></thead><tbody>';
+
+  for (let i = 1; i <= numLayers; i++) {
+    const wiresInLayer = 6 * i;
+    const layerOD = bundleOD(wireDia, i);
+    const layLength = layRatio * layerOD;
+    const dir = layDirections[i] || 'RH';
+
+    html += '<tr><td>' + i + '</td><td>' + wiresInLayer + '</td><td>' + fmt(getDisplayValue(layerOD)) + '</td><td>' + fmt(getDisplayValue(layLength)) + '</td><td>' +
+      '<div class="lay-toggle">' +
+      '<button class="' + (dir === 'RH' ? 'active' : '') + '" onclick="setLayDir(' + i + ',\'RH\')">RH</button>' +
+      '<button class="' + (dir === 'LH' ? 'active' : '') + '" onclick="setLayDir(' + i + ',\'LH\')">LH</button>' +
+      '</div></td></tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('ll-table-wrap').innerHTML = html;
+}
+
+function setLayDir(layer, dir) {
+  layDirections[layer] = dir;
+  calcLayLength();
+}
+
+/* ================================================================
+   3. ELONGATION
+   ================================================================ */
+function calcElongation() {
+  const straightLen = getInputMm(parseFloat(document.getElementById('el-straightLen').value) || 0);
+  const layLen = getInputMm(parseFloat(document.getElementById('el-layLen').value) || 1);
+  const bundleDia = getInputMm(parseFloat(document.getElementById('el-bundleDia').value) || 0);
+
+  const wireLen = straightLen * Math.sqrt(1 + Math.pow(Math.PI * bundleDia / layLen, 2));
+  const elongation = straightLen > 0 ? ((wireLen - straightLen) / straightLen) * 100 : 0;
+
+  document.getElementById('el-results').innerHTML =
+    '<div class="result-box"><div class="result-label">Actual Wire Length</div><div class="result-value">' + fmt(getDisplayValue(wireLen)) + ' ' + lenUnit() + '</div><div class="result-detail">Length needed due to helical path</div></div>' +
+    '<div class="result-box"><div class="result-label">Elongation</div><div class="result-value">' + fmt(elongation) + '%</div><div class="result-detail">Increase vs straight length</div></div>' +
+    '<div class="result-box"><div class="result-label">Length Difference</div><div class="result-value">' + fmt(getDisplayValue(wireLen - straightLen)) + ' ' + lenUnit() + '</div><div class="result-detail">Extra wire required</div></div>';
+}
+
+/* ================================================================
+   4. WEIGHT ESTIMATOR
+   ================================================================ */
+function calcWeight() {
+  const wireDiaOuter = getInputMm(parseFloat(document.getElementById('wt-wireDia').value) || 0);
+  const insThick = getInputMm(parseFloat(document.getElementById('wt-insThick').value) || 0);
+  const material = document.getElementById('wt-material').value;
+  const wireCount = parseInt(document.getElementById('wt-wireCount').value) || 1;
+  const length_mm = getInputMm(parseFloat(document.getElementById('wt-length').value) || 0);
+
+  const conductorDia = wireDiaOuter - 2 * insThick;
+  const conductorRadius_cm = (conductorDia / 2) / 10;
+  const outerRadius_cm = (wireDiaOuter / 2) / 10;
+
+  // Cross-section areas in cm^2
+  const conductorArea = Math.PI * conductorRadius_cm * conductorRadius_cm;
+  const insulationArea = Math.PI * outerRadius_cm * outerRadius_cm - conductorArea;
+
+  const density = DENSITY[material];
+  const length_cm = length_mm / 10;
+
+  // Weight per cm of one wire
+  const conductorWeightPerCm = conductorArea * density; // g/cm
+  const insulationWeightPerCm = insulationArea * INS_DENSITY; // g/cm
+  const wireWeightPerCm = conductorWeightPerCm + insulationWeightPerCm;
+
+  // Per meter and total
+  const weightPerMeter = wireWeightPerCm * 100 * wireCount; // g/m
+  const totalWeight = wireWeightPerCm * length_cm * wireCount; // g
+
+  const displayWPM = isMetric ? weightPerMeter : gToOz(weightPerMeter) / 3.28084 * 1; // oz/ft conversion
+  const displayTotal = isMetric ? totalWeight : gToOz(totalWeight);
+
+  const wpmUnit = isMetric ? 'g/m' : 'oz/ft';
+  const wtUnit = isMetric ? 'g' : 'oz';
+
+  // For oz/ft: g/m * 0.03527396 oz/g / 3.28084 ft/m  = g/m * 0.001075
+  const displayWPM2 = isMetric ? weightPerMeter : weightPerMeter * 0.001075;
+
+  document.getElementById('wt-results').innerHTML =
+    '<div class="result-box"><div class="result-label">Weight per Meter</div><div class="result-value">' + fmt(isMetric ? weightPerMeter : displayWPM2) + ' ' + wpmUnit + '</div><div class="result-detail">' + wireCount + ' wire(s), ' + material + '</div></div>' +
+    '<div class="result-box"><div class="result-label">Total Weight</div><div class="result-value">' + fmt(displayTotal) + ' ' + wtUnit + '</div><div class="result-detail">For ' + fmt(getDisplayValue(length_mm)) + ' ' + lenUnit() + ' harness length</div></div>' +
+    '<div class="result-box"><div class="result-label">Conductor Diameter</div><div class="result-value">' + fmt(getDisplayValue(conductorDia > 0 ? conductorDia : 0)) + ' ' + diaUnit() + '</div><div class="result-detail">After subtracting insulation</div></div>';
+}
+
+/* ================================================================
+   5. CROSS-SECTION VISUALIZER
+   ================================================================ */
+function drawVisualization() {
+  const wireDia = getInputMm(parseFloat(document.getElementById('vz-wireDia').value) || 1);
+  const numLayers = Math.min(parseInt(document.getElementById('vz-numLayers').value) || 1, 8);
+  const r = wireDia / 2; // wire radius in mm (used as SVG units)
+
+  const wires = [];
+
+  // Core wire at center
+  wires.push({ x: 0, y: 0, layer: 0 });
+
+  // Each layer: wires placed on a circle of radius = layer_index * wireDia
+  for (let layerIdx = 1; layerIdx <= numLayers; layerIdx++) {
+    const numWires = 6 * layerIdx;
+    const layerRadius = layerIdx * wireDia;
+    for (let j = 0; j < numWires; j++) {
+      const angle = (2 * Math.PI * j) / numWires;
+      wires.push({
+        x: layerRadius * Math.cos(angle),
+        y: layerRadius * Math.sin(angle),
+        layer: layerIdx
+      });
+    }
+  }
+
+  // SVG dimensions
+  const maxRadius = numLayers * wireDia + r;
+  const padding = r * 2;
+  const size = (maxRadius + padding) * 2;
+  const viewBox = (-maxRadius - padding) + ' ' + (-maxRadius - padding) + ' ' + size + ' ' + size;
+
+  let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + viewBox + '" width="500" height="500">';
+
+  // Background circle for bundle OD
+  const bundleR = bundleOD(wireDia, numLayers) / 2;
+  svg += '<circle cx="0" cy="0" r="' + bundleR + '" fill="none" stroke="' + (isDark ? '#4b5563' : '#d1d5db') + '" stroke-width="' + (r * 0.1) + '" stroke-dasharray="' + (r * 0.3) + '"/>';
+
+  // Draw wires
+  wires.forEach(w => {
+    const color = LAYER_COLORS[w.layer % LAYER_COLORS.length];
+    svg += '<circle cx="' + w.x.toFixed(4) + '" cy="' + w.y.toFixed(4) + '" r="' + (r * 0.95).toFixed(4) + '" fill="' + color + '" stroke="' + (isDark ? '#1f2937' : '#ffffff') + '" stroke-width="' + (r * 0.1).toFixed(4) + '"/>';
+  });
+
+  svg += '</svg>';
+  document.getElementById('vz-canvas').innerHTML = svg;
+
+  // Legend
+  let legend = '';
+  for (let i = 0; i <= numLayers; i++) {
+    const label = i === 0 ? 'Core (1)' : 'Layer ' + i + ' (' + (6 * i) + ')';
+    legend += '<div class="viz-legend-item"><div class="viz-legend-swatch" style="background:' + LAYER_COLORS[i % LAYER_COLORS.length] + '"></div>' + label + '</div>';
+  }
+  document.getElementById('vz-legend').innerHTML = legend;
+}
+
+/* ================================================================
+   6. EXPORT
+   ================================================================ */
+let exportData = [];
+
+function buildExportTable() {
+  const wireDia = getInputMm(parseFloat(document.getElementById('ex-wireDia').value) || 0);
+  const numLayers = parseInt(document.getElementById('ex-numLayers').value) || 1;
+  const layRatio = parseFloat(document.getElementById('ex-layRatio').value) || 15;
+  const straightLen = getInputMm(parseFloat(document.getElementById('ex-straightLen').value) || 0);
+
+  exportData = [];
+  let totalWires = 1;
+
+  for (let i = 1; i <= numLayers; i++) {
+    const wiresInLayer = 6 * i;
+    totalWires += wiresInLayer;
+    const layerOD = bundleOD(wireDia, i);
+    const layLength = layRatio * layerOD;
+    const dir = i % 2 === 1 ? 'RH' : 'LH';
+
+    // Elongation for this layer
+    const wireLen = straightLen * Math.sqrt(1 + Math.pow(Math.PI * layerOD / layLength, 2));
+    const elongPct = straightLen > 0 ? ((wireLen - straightLen) / straightLen) * 100 : 0;
+
+    exportData.push({
+      layer: i,
+      wires: wiresInLayer,
+      totalWires,
+      direction: dir,
+      layerOD,
+      layLength,
+      wireLength: wireLen,
+      elongation: elongPct
+    });
+  }
+
+  const u = diaUnit();
+  let html = '<table><thead><tr><th>Layer</th><th>Wires</th><th>Total</th><th>Dir</th><th>Layer OD (' + u + ')</th><th>Lay Length (' + u + ')</th><th>Wire Length (' + u + ')</th><th>Elongation</th></tr></thead><tbody>';
+  exportData.forEach(d => {
+    html += '<tr><td>' + d.layer + '</td><td>' + d.wires + '</td><td>' + d.totalWires + '</td><td>' + d.direction + '</td><td>' + fmt(getDisplayValue(d.layerOD)) + '</td><td>' + fmt(getDisplayValue(d.layLength)) + '</td><td>' + fmt(getDisplayValue(d.wireLength)) + '</td><td>' + fmt(d.elongation) + '%</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('ex-table-wrap').innerHTML = html;
+}
+
+function exportText() {
+  if (!exportData.length) { showToast('No data to export'); return; }
+  const u = diaUnit();
+  let text = 'Concentric Twisting Calculator - Summary\n';
+  text += '=========================================\n\n';
+  text += padR('Layer', 8) + padR('Wires', 8) + padR('Total', 8) + padR('Dir', 6) + padR('OD(' + u + ')', 12) + padR('Lay(' + u + ')', 12) + padR('WireLen(' + u + ')', 14) + 'Elong.\n';
+  text += '-'.repeat(80) + '\n';
+  exportData.forEach(d => {
+    text += padR(d.layer, 8) + padR(d.wires, 8) + padR(d.totalWires, 8) + padR(d.direction, 6) + padR(fmt(getDisplayValue(d.layerOD)), 12) + padR(fmt(getDisplayValue(d.layLength)), 12) + padR(fmt(getDisplayValue(d.wireLength)), 14) + fmt(d.elongation) + '%\n';
+  });
+  copyToClipboard(text);
+}
+
+function exportCSV() {
+  if (!exportData.length) { showToast('No data to export'); return; }
+  const u = diaUnit();
+  let csv = 'Layer,Wires in Layer,Total Wires,Direction,Layer OD (' + u + '),Lay Length (' + u + '),Wire Length (' + u + '),Elongation (%)\n';
+  exportData.forEach(d => {
+    csv += d.layer + ',' + d.wires + ',' + d.totalWires + ',' + d.direction + ',' + fmt(getDisplayValue(d.layerOD)) + ',' + fmt(getDisplayValue(d.layLength)) + ',' + fmt(getDisplayValue(d.wireLength)) + ',' + fmt(d.elongation) + '\n';
+  });
+  copyToClipboard(csv);
+}
+
+/* ================================================================
+   HELPERS
+   ================================================================ */
+function fmt(n) {
+  if (typeof n !== 'number' || isNaN(n)) return '0.00';
+  if (Math.abs(n) >= 1000) return n.toFixed(1);
+  if (Math.abs(n) >= 100) return n.toFixed(2);
+  if (Math.abs(n) >= 1) return n.toFixed(3);
+  return n.toFixed(4);
+}
+
+function padR(s, len) {
+  s = String(s);
+  while (s.length < len) s += ' ';
+  return s;
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast('Copied to clipboard');
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('Copied to clipboard');
+  } catch (e) {
+    showToast('Copy failed - please copy manually');
+  }
+  document.body.removeChild(ta);
+}
+
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2500);
+}
+
+function recalcAll() {
+  calcLayers();
+  calcLayLength();
+  calcElongation();
+  calcWeight();
+  drawVisualization();
+  buildExportTable();
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+document.addEventListener('DOMContentLoaded', recalcAll);
+</script>
+</body>
+</html>
