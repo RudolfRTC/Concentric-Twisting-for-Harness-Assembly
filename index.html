@@ -378,6 +378,68 @@ tr:hover td { background: var(--accent-light); }
 
 .toast.show { transform: translateY(0); opacity: 1; }
 
+/* ── Wire Assignment Map ──────────────────────────────────────── */
+.wm-table select,
+.wm-table input[type="text"],
+.wm-table input[type="number"] {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: var(--font);
+  max-width: 160px;
+}
+
+.wm-table select { cursor: pointer; }
+
+.wm-table td { padding: 6px 8px; font-size: 0.78rem; }
+.wm-table th { padding: 8px 10px; font-size: 0.68rem; }
+
+.wm-table tr:nth-child(even) td { background: var(--bg-input); }
+.wm-table tr:hover td { background: var(--accent-light); }
+
+.wm-od-input { width: 70px; }
+.wm-custom-input { width: 110px; margin-left: 4px; }
+.wm-label-input { width: 170px; }
+
+.wm-warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-theme="dark"] .wm-warning {
+  background: #78350f;
+  border-color: #d97706;
+  color: #fef3c7;
+}
+
+.wm-table-container {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.wm-table-container table { margin-top: 0; }
+
+.wm-table-container th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .header { padding: 12px 16px; }
@@ -388,6 +450,8 @@ tr:hover td { background: var(--accent-light); }
   .card { padding: 16px; }
   .form-grid { grid-template-columns: 1fr; }
   .result-value { font-size: 1.2rem; }
+  .wm-table-container { max-height: 400px; }
+  .wm-label-input { width: 120px; }
 }
 </style>
 </head>
@@ -413,6 +477,7 @@ tr:hover td { background: var(--accent-light); }
   <button class="tab" data-panel="weight" onclick="switchTab(this)">Weight</button>
   <button class="tab" data-panel="visualizer" onclick="switchTab(this)">Visualizer</button>
   <button class="tab" data-panel="export" onclick="switchTab(this)">Export</button>
+  <button class="tab" data-panel="wiremap" onclick="switchTab(this)">Wire Map</button>
 </div>
 
 <!-- Main Content -->
@@ -614,6 +679,27 @@ tr:hover td { background: var(--accent-light); }
     </div>
   </div>
 
+  <!-- ─── 7. WIRE ASSIGNMENT MAP ─────────────────────────────────── -->
+  <div class="panel" id="panel-wiremap">
+    <div class="card">
+      <div class="card-title">Wire Assignment Map</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Number of Layers</label>
+          <div class="input-wrap">
+            <input type="number" id="wm-numLayers" value="3" min="1" max="20" step="1" oninput="buildWireMap()">
+          </div>
+        </div>
+      </div>
+      <div id="wm-warning" style="display:none"></div>
+      <div class="result-row" id="wm-results"></div>
+      <div class="wm-table-container" id="wm-table-wrap"></div>
+      <div class="btn-group">
+        <button class="btn" onclick="exportWireMapCSV()">Copy Wire Map as CSV</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Toast -->
@@ -623,13 +709,13 @@ tr:hover td { background: var(--accent-light); }
 /* ================================================================
    STATE
    ================================================================ */
-let isMetric = true;
-let isDark = false;
+var isMetric = true;
+var isDark = false;
 
 /* ================================================================
    AWG TABLE  (AWG -> mm diameter for common sizes)
    ================================================================ */
-const AWG_TABLE = {
+var AWG_TABLE = {
   '0000': 11.684, '000': 10.405, '00': 9.266, '0': 8.251,
   '1': 7.348, '2': 6.544, '3': 5.827, '4': 5.189, '5': 4.621,
   '6': 4.115, '7': 3.665, '8': 3.264, '9': 2.906, '10': 2.588,
@@ -639,15 +725,72 @@ const AWG_TABLE = {
   '26': 0.405, '27': 0.361, '28': 0.321, '29': 0.286, '30': 0.255,
 };
 
-const LAYER_COLORS = [
+var LAYER_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4',
   '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b',
   '#6366f1', '#10b981', '#e11d48', '#0ea5e9', '#a855f7',
   '#84cc16', '#f43f5e', '#06b6d4', '#d946ef', '#facc15'
 ];
 
-const DENSITY = { copper: 8.96, aluminium: 2.70 }; // g/cm^3
-const INS_DENSITY = 1.4; // g/cm^3 approximate PVC/XLPE
+var DENSITY = { copper: 8.96, aluminium: 2.70 }; // g/cm^3
+var INS_DENSITY = 1.4; // g/cm^3 approximate PVC/XLPE
+
+/* ================================================================
+   WIRE SPEC DATA
+   ================================================================ */
+var WIRE_SPECS = {
+  'MIL-W-22759/16': {
+    standard: 'MIL-W-22759/16', temp: 150, voltage: 600,
+    insOD: { '26': 1.19, '24': 1.37, '22': 1.57, '20': 1.83, '18': 2.16, '16': 2.51, '14': 2.97, '12': 3.53, '10': 4.19 }
+  },
+  'MIL-W-22759/32': {
+    standard: 'MIL-W-22759/32', temp: 200, voltage: 600,
+    insOD: { '26': 1.22, '24': 1.40, '22': 1.60, '20': 1.88, '18': 2.21, '16': 2.57, '14': 3.05, '12': 3.61, '10': 4.27 }
+  },
+  'MIL-W-22759/11': {
+    standard: 'MIL-W-22759/11', temp: 260, voltage: 600,
+    insOD: { '26': 1.14, '24': 1.32, '22': 1.52, '20': 1.78, '18': 2.11, '16': 2.46, '14': 2.92, '12': 3.45, '10': 4.11 }
+  },
+  'MIL-W-22759/87': {
+    standard: 'MIL-W-22759/87', temp: 150, voltage: 600,
+    insOD: { '26': 1.22, '24': 1.40, '22': 1.60, '20': 1.88, '18': 2.21, '16': 2.57, '14': 3.05, '12': 3.61, '10': 4.27 }
+  },
+  'Tefzel ETFE': {
+    standard: 'ETFE', temp: 155, voltage: 600,
+    insOD: { '28': 0.97, '26': 1.14, '24': 1.32, '22': 1.52, '20': 1.78, '18': 2.11, '16': 2.46, '14': 2.92, '12': 3.45, '10': 4.11 }
+  },
+  'TXL': {
+    standard: 'SAE J1128 TXL', temp: 125, voltage: 60,
+    insOD: { '22': 1.40, '20': 1.60, '18': 1.85, '16': 2.15, '14': 2.55, '12': 3.00, '10': 3.60, '8': 4.50, '6': 5.50 }
+  },
+  'GXL': {
+    standard: 'SAE J1128 GXL', temp: 125, voltage: 60,
+    insOD: { '22': 1.65, '20': 1.90, '18': 2.16, '16': 2.51, '14': 2.97, '12': 3.53, '10': 4.19, '8': 5.16, '6': 6.35 }
+  },
+  'SXL': {
+    standard: 'SAE J1128 SXL', temp: 125, voltage: 60,
+    insOD: { '18': 2.54, '16': 2.90, '14': 3.40, '12': 4.00, '10': 4.75, '8': 5.75, '6': 7.00 }
+  },
+  'Custom': {
+    standard: 'Custom', temp: null, voltage: null,
+    insOD: {}
+  }
+};
+
+var WIRE_COLORS_LIST = [
+  'Black', 'Brown', 'Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Violet', 'Grey', 'White',
+  'Black/White', 'Red/White', 'Blue/White', 'Green/White', 'Brown/White',
+  'Red/Black', 'Blue/Red', 'Green/Yellow'
+];
+
+var WIRE_DESTINATIONS = [
+  'Shield/Ground', 'Power+', 'Power\u2212', 'Signal A', 'Signal B',
+  'CAN High', 'CAN Low', 'Data TX', 'Data RX',
+  'Analog In', 'Analog Out', 'Discrete In', 'Discrete Out', 'Spare', 'Custom'
+];
+
+/* Wire Assignment Map state */
+var wireAssignments = [];
 
 /* ================================================================
    UNIT CONVERSION HELPERS
@@ -680,7 +823,7 @@ function toggleTheme() {
 
 function toggleUnits() {
   isMetric = !isMetric;
-  const btn = document.getElementById('unitToggle');
+  var btn = document.getElementById('unitToggle');
   btn.textContent = isMetric ? 'Imperial' : 'Metric';
   btn.classList.toggle('active', !isMetric);
   updateAllUnits();
@@ -688,11 +831,11 @@ function toggleUnits() {
 }
 
 function updateAllUnits() {
-  const u = isMetric ? 'mm' : 'in';
-  document.querySelectorAll('.ll-unit, .el-unit, .vz-unit, .ex-unit').forEach(el => el.textContent = u);
-  document.querySelectorAll('.wt-unit-dia').forEach(el => el.textContent = u);
-  document.querySelectorAll('.wt-unit-len').forEach(el => el.textContent = u);
-  document.querySelectorAll('.ex-len-unit').forEach(el => el.textContent = u);
+  var u = isMetric ? 'mm' : 'in';
+  document.querySelectorAll('.ll-unit, .el-unit, .vz-unit, .ex-unit').forEach(function(el) { el.textContent = u; });
+  document.querySelectorAll('.wt-unit-dia').forEach(function(el) { el.textContent = u; });
+  document.querySelectorAll('.wt-unit-len').forEach(function(el) { el.textContent = u; });
+  document.querySelectorAll('.ex-len-unit').forEach(function(el) { el.textContent = u; });
   document.getElementById('lc-wireDia-unit').textContent = u;
 }
 
@@ -700,8 +843,8 @@ function updateAllUnits() {
    TAB SWITCHING
    ================================================================ */
 function switchTab(tabEl) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
   tabEl.classList.add('active');
   document.getElementById('panel-' + tabEl.dataset.panel).classList.add('active');
   recalcAll();
@@ -711,12 +854,12 @@ function switchTab(tabEl) {
    CORE: CONCENTRIC LAYER RULE  (1-6-12-18-...)
    ================================================================ */
 function getLayerWireCounts(numLayers) {
-  const layers = [{ layer: 0, wiresInLayer: 1, totalWires: 1 }];
-  let total = 1;
-  for (let i = 1; i <= numLayers; i++) {
-    const wiresInLayer = 6 * i;
+  var layers = [{ layer: 0, wiresInLayer: 1, totalWires: 1 }];
+  var total = 1;
+  for (var i = 1; i <= numLayers; i++) {
+    var wiresInLayer = 6 * i;
     total += wiresInLayer;
-    layers.push({ layer: i, wiresInLayer, totalWires: total });
+    layers.push({ layer: i, wiresInLayer: wiresInLayer, totalWires: total });
   }
   return layers;
 }
@@ -729,20 +872,20 @@ function bundleOD(wireDia, numLayers) {
    1. LAYER CONFIGURATOR
    ================================================================ */
 function calcLayers() {
-  const wireDia = getInputMm(parseFloat(document.getElementById('lc-wireDia').value) || 0);
-  const numLayers = parseInt(document.getElementById('lc-numLayers').value) || 1;
-  const layers = getLayerWireCounts(numLayers);
-  const od = bundleOD(wireDia, numLayers);
+  var wireDia = getInputMm(parseFloat(document.getElementById('lc-wireDia').value) || 0);
+  var numLayers = parseInt(document.getElementById('lc-numLayers').value) || 1;
+  var layers = getLayerWireCounts(numLayers);
+  var od = bundleOD(wireDia, numLayers);
 
-  let html = '<table><thead><tr><th>Layer</th><th>Wires in Layer</th><th>Cumulative Wires</th><th>Layer OD (' + diaUnit() + ')</th></tr></thead><tbody>';
-  layers.forEach(l => {
-    const layerOD = bundleOD(wireDia, l.layer);
+  var html = '<table><thead><tr><th>Layer</th><th>Wires in Layer</th><th>Cumulative Wires</th><th>Layer OD (' + diaUnit() + ')</th></tr></thead><tbody>';
+  layers.forEach(function(l) {
+    var layerOD = bundleOD(wireDia, l.layer);
     html += '<tr><td>' + (l.layer === 0 ? 'Core' : l.layer) + '</td><td>' + l.wiresInLayer + '</td><td>' + l.totalWires + '</td><td>' + fmt(getDisplayValue(layerOD)) + '</td></tr>';
   });
   html += '</tbody></table>';
   document.getElementById('lc-table-wrap').innerHTML = html;
 
-  const totalWires = layers[layers.length - 1].totalWires;
+  var totalWires = layers[layers.length - 1].totalWires;
   document.getElementById('lc-results').innerHTML =
     '<div class="result-box"><div class="result-label">Total Wires</div><div class="result-value">' + totalWires + '</div></div>' +
     '<div class="result-box"><div class="result-label">Bundle OD</div><div class="result-value">' + fmt(getDisplayValue(od)) + ' ' + diaUnit() + '</div></div>' +
@@ -753,27 +896,27 @@ function calcLayers() {
    2. LAY LENGTH CALCULATOR
    ================================================================ */
 // Per-layer lay directions; stored globally and reset when numLayers changes
-let layDirections = {};
+var layDirections = {};
 
 function calcLayLength() {
-  const wireDia = getInputMm(parseFloat(document.getElementById('ll-wireDia').value) || 0);
-  const numLayers = parseInt(document.getElementById('ll-numLayers').value) || 1;
-  const layRatio = parseFloat(document.getElementById('ll-layRatio').value) || 15;
+  var wireDia = getInputMm(parseFloat(document.getElementById('ll-wireDia').value) || 0);
+  var numLayers = parseInt(document.getElementById('ll-numLayers').value) || 1;
+  var layRatio = parseFloat(document.getElementById('ll-layRatio').value) || 15;
 
   // Init directions (alternating default)
-  for (let i = 1; i <= numLayers; i++) {
+  for (var i = 1; i <= numLayers; i++) {
     if (layDirections[i] === undefined) {
       layDirections[i] = i % 2 === 1 ? 'RH' : 'LH';
     }
   }
 
-  let html = '<table><thead><tr><th>Layer</th><th>Wires</th><th>Layer OD (' + diaUnit() + ')</th><th>Lay Length (' + diaUnit() + ')</th><th>Direction</th></tr></thead><tbody>';
+  var html = '<table><thead><tr><th>Layer</th><th>Wires</th><th>Layer OD (' + diaUnit() + ')</th><th>Lay Length (' + diaUnit() + ')</th><th>Direction</th></tr></thead><tbody>';
 
-  for (let i = 1; i <= numLayers; i++) {
-    const wiresInLayer = 6 * i;
-    const layerOD = bundleOD(wireDia, i);
-    const layLength = layRatio * layerOD;
-    const dir = layDirections[i] || 'RH';
+  for (var i = 1; i <= numLayers; i++) {
+    var wiresInLayer = 6 * i;
+    var layerOD = bundleOD(wireDia, i);
+    var layLength = layRatio * layerOD;
+    var dir = layDirections[i] || 'RH';
 
     html += '<tr><td>' + i + '</td><td>' + wiresInLayer + '</td><td>' + fmt(getDisplayValue(layerOD)) + '</td><td>' + fmt(getDisplayValue(layLength)) + '</td><td>' +
       '<div class="lay-toggle">' +
@@ -794,12 +937,12 @@ function setLayDir(layer, dir) {
    3. ELONGATION
    ================================================================ */
 function calcElongation() {
-  const straightLen = getInputMm(parseFloat(document.getElementById('el-straightLen').value) || 0);
-  const layLen = getInputMm(parseFloat(document.getElementById('el-layLen').value) || 1);
-  const bundleDia = getInputMm(parseFloat(document.getElementById('el-bundleDia').value) || 0);
+  var straightLen = getInputMm(parseFloat(document.getElementById('el-straightLen').value) || 0);
+  var layLen = getInputMm(parseFloat(document.getElementById('el-layLen').value) || 1);
+  var bundleDia = getInputMm(parseFloat(document.getElementById('el-bundleDia').value) || 0);
 
-  const wireLen = straightLen * Math.sqrt(1 + Math.pow(Math.PI * bundleDia / layLen, 2));
-  const elongation = straightLen > 0 ? ((wireLen - straightLen) / straightLen) * 100 : 0;
+  var wireLen = straightLen * Math.sqrt(1 + Math.pow(Math.PI * bundleDia / layLen, 2));
+  var elongation = straightLen > 0 ? ((wireLen - straightLen) / straightLen) * 100 : 0;
 
   document.getElementById('el-results').innerHTML =
     '<div class="result-box"><div class="result-label">Actual Wire Length</div><div class="result-value">' + fmt(getDisplayValue(wireLen)) + ' ' + lenUnit() + '</div><div class="result-detail">Length needed due to helical path</div></div>' +
@@ -811,40 +954,40 @@ function calcElongation() {
    4. WEIGHT ESTIMATOR
    ================================================================ */
 function calcWeight() {
-  const wireDiaOuter = getInputMm(parseFloat(document.getElementById('wt-wireDia').value) || 0);
-  const insThick = getInputMm(parseFloat(document.getElementById('wt-insThick').value) || 0);
-  const material = document.getElementById('wt-material').value;
-  const wireCount = parseInt(document.getElementById('wt-wireCount').value) || 1;
-  const length_mm = getInputMm(parseFloat(document.getElementById('wt-length').value) || 0);
+  var wireDiaOuter = getInputMm(parseFloat(document.getElementById('wt-wireDia').value) || 0);
+  var insThick = getInputMm(parseFloat(document.getElementById('wt-insThick').value) || 0);
+  var material = document.getElementById('wt-material').value;
+  var wireCount = parseInt(document.getElementById('wt-wireCount').value) || 1;
+  var length_mm = getInputMm(parseFloat(document.getElementById('wt-length').value) || 0);
 
-  const conductorDia = wireDiaOuter - 2 * insThick;
-  const conductorRadius_cm = (conductorDia / 2) / 10;
-  const outerRadius_cm = (wireDiaOuter / 2) / 10;
+  var conductorDia = wireDiaOuter - 2 * insThick;
+  var conductorRadius_cm = (conductorDia / 2) / 10;
+  var outerRadius_cm = (wireDiaOuter / 2) / 10;
 
   // Cross-section areas in cm^2
-  const conductorArea = Math.PI * conductorRadius_cm * conductorRadius_cm;
-  const insulationArea = Math.PI * outerRadius_cm * outerRadius_cm - conductorArea;
+  var conductorArea = Math.PI * conductorRadius_cm * conductorRadius_cm;
+  var insulationArea = Math.PI * outerRadius_cm * outerRadius_cm - conductorArea;
 
-  const density = DENSITY[material];
-  const length_cm = length_mm / 10;
+  var density = DENSITY[material];
+  var length_cm = length_mm / 10;
 
   // Weight per cm of one wire
-  const conductorWeightPerCm = conductorArea * density; // g/cm
-  const insulationWeightPerCm = insulationArea * INS_DENSITY; // g/cm
-  const wireWeightPerCm = conductorWeightPerCm + insulationWeightPerCm;
+  var conductorWeightPerCm = conductorArea * density; // g/cm
+  var insulationWeightPerCm = insulationArea * INS_DENSITY; // g/cm
+  var wireWeightPerCm = conductorWeightPerCm + insulationWeightPerCm;
 
   // Per meter and total
-  const weightPerMeter = wireWeightPerCm * 100 * wireCount; // g/m
-  const totalWeight = wireWeightPerCm * length_cm * wireCount; // g
+  var weightPerMeter = wireWeightPerCm * 100 * wireCount; // g/m
+  var totalWeight = wireWeightPerCm * length_cm * wireCount; // g
 
-  const displayWPM = isMetric ? weightPerMeter : gToOz(weightPerMeter) / 3.28084 * 1; // oz/ft conversion
-  const displayTotal = isMetric ? totalWeight : gToOz(totalWeight);
+  var displayWPM = isMetric ? weightPerMeter : gToOz(weightPerMeter) / 3.28084 * 1; // oz/ft conversion
+  var displayTotal = isMetric ? totalWeight : gToOz(totalWeight);
 
-  const wpmUnit = isMetric ? 'g/m' : 'oz/ft';
-  const wtUnit = isMetric ? 'g' : 'oz';
+  var wpmUnit = isMetric ? 'g/m' : 'oz/ft';
+  var wtUnit = isMetric ? 'g' : 'oz';
 
   // For oz/ft: g/m * 0.03527396 oz/g / 3.28084 ft/m  = g/m * 0.001075
-  const displayWPM2 = isMetric ? weightPerMeter : weightPerMeter * 0.001075;
+  var displayWPM2 = isMetric ? weightPerMeter : weightPerMeter * 0.001075;
 
   document.getElementById('wt-results').innerHTML =
     '<div class="result-box"><div class="result-label">Weight per Meter</div><div class="result-value">' + fmt(isMetric ? weightPerMeter : displayWPM2) + ' ' + wpmUnit + '</div><div class="result-detail">' + wireCount + ' wire(s), ' + material + '</div></div>' +
@@ -856,21 +999,21 @@ function calcWeight() {
    5. CROSS-SECTION VISUALIZER
    ================================================================ */
 function drawVisualization() {
-  const wireDia = getInputMm(parseFloat(document.getElementById('vz-wireDia').value) || 1);
-  const numLayers = Math.min(parseInt(document.getElementById('vz-numLayers').value) || 1, 8);
-  const r = wireDia / 2; // wire radius in mm (used as SVG units)
+  var wireDia = getInputMm(parseFloat(document.getElementById('vz-wireDia').value) || 1);
+  var numLayers = Math.min(parseInt(document.getElementById('vz-numLayers').value) || 1, 8);
+  var r = wireDia / 2; // wire radius in mm (used as SVG units)
 
-  const wires = [];
+  var wires = [];
 
   // Core wire at center
   wires.push({ x: 0, y: 0, layer: 0 });
 
   // Each layer: wires placed on a circle of radius = layer_index * wireDia
-  for (let layerIdx = 1; layerIdx <= numLayers; layerIdx++) {
-    const numWires = 6 * layerIdx;
-    const layerRadius = layerIdx * wireDia;
-    for (let j = 0; j < numWires; j++) {
-      const angle = (2 * Math.PI * j) / numWires;
+  for (var layerIdx = 1; layerIdx <= numLayers; layerIdx++) {
+    var numWires = 6 * layerIdx;
+    var layerRadius = layerIdx * wireDia;
+    for (var j = 0; j < numWires; j++) {
+      var angle = (2 * Math.PI * j) / numWires;
       wires.push({
         x: layerRadius * Math.cos(angle),
         y: layerRadius * Math.sin(angle),
@@ -880,20 +1023,20 @@ function drawVisualization() {
   }
 
   // SVG dimensions
-  const maxRadius = numLayers * wireDia + r;
-  const padding = r * 2;
-  const size = (maxRadius + padding) * 2;
-  const viewBox = (-maxRadius - padding) + ' ' + (-maxRadius - padding) + ' ' + size + ' ' + size;
+  var maxRadius = numLayers * wireDia + r;
+  var padding = r * 2;
+  var size = (maxRadius + padding) * 2;
+  var viewBox = (-maxRadius - padding) + ' ' + (-maxRadius - padding) + ' ' + size + ' ' + size;
 
-  let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + viewBox + '" width="500" height="500">';
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + viewBox + '" width="500" height="500">';
 
   // Background circle for bundle OD
-  const bundleR = bundleOD(wireDia, numLayers) / 2;
+  var bundleR = bundleOD(wireDia, numLayers) / 2;
   svg += '<circle cx="0" cy="0" r="' + bundleR + '" fill="none" stroke="' + (isDark ? '#4b5563' : '#d1d5db') + '" stroke-width="' + (r * 0.1) + '" stroke-dasharray="' + (r * 0.3) + '"/>';
 
   // Draw wires
-  wires.forEach(w => {
-    const color = LAYER_COLORS[w.layer % LAYER_COLORS.length];
+  wires.forEach(function(w) {
+    var color = LAYER_COLORS[w.layer % LAYER_COLORS.length];
     svg += '<circle cx="' + w.x.toFixed(4) + '" cy="' + w.y.toFixed(4) + '" r="' + (r * 0.95).toFixed(4) + '" fill="' + color + '" stroke="' + (isDark ? '#1f2937' : '#ffffff') + '" stroke-width="' + (r * 0.1).toFixed(4) + '"/>';
   });
 
@@ -901,9 +1044,9 @@ function drawVisualization() {
   document.getElementById('vz-canvas').innerHTML = svg;
 
   // Legend
-  let legend = '';
-  for (let i = 0; i <= numLayers; i++) {
-    const label = i === 0 ? 'Core (1)' : 'Layer ' + i + ' (' + (6 * i) + ')';
+  var legend = '';
+  for (var i = 0; i <= numLayers; i++) {
+    var label = i === 0 ? 'Core (1)' : 'Layer ' + i + ' (' + (6 * i) + ')';
     legend += '<div class="viz-legend-item"><div class="viz-legend-swatch" style="background:' + LAYER_COLORS[i % LAYER_COLORS.length] + '"></div>' + label + '</div>';
   }
   document.getElementById('vz-legend').innerHTML = legend;
@@ -912,43 +1055,43 @@ function drawVisualization() {
 /* ================================================================
    6. EXPORT
    ================================================================ */
-let exportData = [];
+var exportData = [];
 
 function buildExportTable() {
-  const wireDia = getInputMm(parseFloat(document.getElementById('ex-wireDia').value) || 0);
-  const numLayers = parseInt(document.getElementById('ex-numLayers').value) || 1;
-  const layRatio = parseFloat(document.getElementById('ex-layRatio').value) || 15;
-  const straightLen = getInputMm(parseFloat(document.getElementById('ex-straightLen').value) || 0);
+  var wireDia = getInputMm(parseFloat(document.getElementById('ex-wireDia').value) || 0);
+  var numLayers = parseInt(document.getElementById('ex-numLayers').value) || 1;
+  var layRatio = parseFloat(document.getElementById('ex-layRatio').value) || 15;
+  var straightLen = getInputMm(parseFloat(document.getElementById('ex-straightLen').value) || 0);
 
   exportData = [];
-  let totalWires = 1;
+  var totalWires = 1;
 
-  for (let i = 1; i <= numLayers; i++) {
-    const wiresInLayer = 6 * i;
+  for (var i = 1; i <= numLayers; i++) {
+    var wiresInLayer = 6 * i;
     totalWires += wiresInLayer;
-    const layerOD = bundleOD(wireDia, i);
-    const layLength = layRatio * layerOD;
-    const dir = i % 2 === 1 ? 'RH' : 'LH';
+    var layerOD = bundleOD(wireDia, i);
+    var layLength = layRatio * layerOD;
+    var dir = i % 2 === 1 ? 'RH' : 'LH';
 
     // Elongation for this layer
-    const wireLen = straightLen * Math.sqrt(1 + Math.pow(Math.PI * layerOD / layLength, 2));
-    const elongPct = straightLen > 0 ? ((wireLen - straightLen) / straightLen) * 100 : 0;
+    var wireLen = straightLen * Math.sqrt(1 + Math.pow(Math.PI * layerOD / layLength, 2));
+    var elongPct = straightLen > 0 ? ((wireLen - straightLen) / straightLen) * 100 : 0;
 
     exportData.push({
       layer: i,
       wires: wiresInLayer,
-      totalWires,
+      totalWires: totalWires,
       direction: dir,
-      layerOD,
-      layLength,
+      layerOD: layerOD,
+      layLength: layLength,
       wireLength: wireLen,
       elongation: elongPct
     });
   }
 
-  const u = diaUnit();
-  let html = '<table><thead><tr><th>Layer</th><th>Wires</th><th>Total</th><th>Dir</th><th>Layer OD (' + u + ')</th><th>Lay Length (' + u + ')</th><th>Wire Length (' + u + ')</th><th>Elongation</th></tr></thead><tbody>';
-  exportData.forEach(d => {
+  var u = diaUnit();
+  var html = '<table><thead><tr><th>Layer</th><th>Wires</th><th>Total</th><th>Dir</th><th>Layer OD (' + u + ')</th><th>Lay Length (' + u + ')</th><th>Wire Length (' + u + ')</th><th>Elongation</th></tr></thead><tbody>';
+  exportData.forEach(function(d) {
     html += '<tr><td>' + d.layer + '</td><td>' + d.wires + '</td><td>' + d.totalWires + '</td><td>' + d.direction + '</td><td>' + fmt(getDisplayValue(d.layerOD)) + '</td><td>' + fmt(getDisplayValue(d.layLength)) + '</td><td>' + fmt(getDisplayValue(d.wireLength)) + '</td><td>' + fmt(d.elongation) + '%</td></tr>';
   });
   html += '</tbody></table>';
@@ -957,12 +1100,12 @@ function buildExportTable() {
 
 function exportText() {
   if (!exportData.length) { showToast('No data to export'); return; }
-  const u = diaUnit();
-  let text = 'Concentric Twisting Calculator - Summary\n';
+  var u = diaUnit();
+  var text = 'Concentric Twisting Calculator - Summary\n';
   text += '=========================================\n\n';
   text += padR('Layer', 8) + padR('Wires', 8) + padR('Total', 8) + padR('Dir', 6) + padR('OD(' + u + ')', 12) + padR('Lay(' + u + ')', 12) + padR('WireLen(' + u + ')', 14) + 'Elong.\n';
   text += '-'.repeat(80) + '\n';
-  exportData.forEach(d => {
+  exportData.forEach(function(d) {
     text += padR(d.layer, 8) + padR(d.wires, 8) + padR(d.totalWires, 8) + padR(d.direction, 6) + padR(fmt(getDisplayValue(d.layerOD)), 12) + padR(fmt(getDisplayValue(d.layLength)), 12) + padR(fmt(getDisplayValue(d.wireLength)), 14) + fmt(d.elongation) + '%\n';
   });
   copyToClipboard(text);
@@ -970,11 +1113,299 @@ function exportText() {
 
 function exportCSV() {
   if (!exportData.length) { showToast('No data to export'); return; }
-  const u = diaUnit();
-  let csv = 'Layer,Wires in Layer,Total Wires,Direction,Layer OD (' + u + '),Lay Length (' + u + '),Wire Length (' + u + '),Elongation (%)\n';
-  exportData.forEach(d => {
+  var u = diaUnit();
+  var csv = 'Layer,Wires in Layer,Total Wires,Direction,Layer OD (' + u + '),Lay Length (' + u + '),Wire Length (' + u + '),Elongation (%)\n';
+  exportData.forEach(function(d) {
     csv += d.layer + ',' + d.wires + ',' + d.totalWires + ',' + d.direction + ',' + fmt(getDisplayValue(d.layerOD)) + ',' + fmt(getDisplayValue(d.layLength)) + ',' + fmt(getDisplayValue(d.wireLength)) + ',' + fmt(d.elongation) + '\n';
   });
+  copyToClipboard(csv);
+}
+
+/* ================================================================
+   7. WIRE ASSIGNMENT MAP
+   ================================================================ */
+function buildWireMap() {
+  var numLayers = parseInt(document.getElementById('wm-numLayers').value) || 1;
+
+  // Build expected wire list from concentric rule
+  var expectedWires = [];
+  expectedWires.push({ wireNum: 1, layer: 0 });
+  var n = 2;
+  for (var l = 1; l <= numLayers; l++) {
+    var count = 6 * l;
+    for (var w = 0; w < count; w++) {
+      expectedWires.push({ wireNum: n++, layer: l });
+    }
+  }
+
+  // Preserve existing assignments, trim or extend
+  var newAssignments = [];
+  for (var i = 0; i < expectedWires.length; i++) {
+    if (i < wireAssignments.length) {
+      // Preserve existing assignment, update wireNum and layer
+      newAssignments.push({
+        wireNum: expectedWires[i].wireNum,
+        layer: expectedWires[i].layer,
+        wireType: wireAssignments[i].wireType,
+        awg: wireAssignments[i].awg,
+        wireOD: wireAssignments[i].wireOD,
+        color: wireAssignments[i].color,
+        destination: wireAssignments[i].destination,
+        customDest: wireAssignments[i].customDest,
+        label: wireAssignments[i].label,
+        standard: wireAssignments[i].standard
+      });
+    } else {
+      // New wire - blank assignment
+      newAssignments.push({
+        wireNum: expectedWires[i].wireNum,
+        layer: expectedWires[i].layer,
+        wireType: '',
+        awg: '',
+        wireOD: null,
+        color: '',
+        destination: '',
+        customDest: '',
+        label: '',
+        standard: ''
+      });
+    }
+  }
+
+  wireAssignments = newAssignments;
+  renderWireMapTable();
+  updateWireMapResults();
+}
+
+function renderWireMapTable() {
+  if (wireAssignments.length === 0) {
+    document.getElementById('wm-table-wrap').innerHTML = '<p style="color:var(--text-secondary);padding:16px;">No wires configured.</p>';
+    return;
+  }
+
+  var u = diaUnit();
+  var wireTypeKeys = Object.keys(WIRE_SPECS);
+  var html = '<table class="wm-table"><thead><tr>' +
+    '<th>Wire #</th><th>Layer</th><th>Wire Type</th><th>AWG</th>' +
+    '<th>Wire OD (' + u + ')</th><th>Color</th><th>Destination</th>' +
+    '<th>Function / Label</th><th>Standard</th>' +
+    '</tr></thead><tbody>';
+
+  for (var i = 0; i < wireAssignments.length; i++) {
+    var w = wireAssignments[i];
+    html += '<tr>';
+
+    // Wire #
+    html += '<td>' + w.wireNum + '</td>';
+
+    // Layer
+    html += '<td>' + (w.layer === 0 ? 'Core' : w.layer) + '</td>';
+
+    // Wire Type
+    html += '<td><select onchange="wmSetType(' + i + ',this.value)">';
+    html += '<option value="">-- Select --</option>';
+    for (var t = 0; t < wireTypeKeys.length; t++) {
+      html += '<option value="' + wireTypeKeys[t] + '"' + (w.wireType === wireTypeKeys[t] ? ' selected' : '') + '>' + wireTypeKeys[t] + '</option>';
+    }
+    html += '</select></td>';
+
+    // AWG
+    var awgOptions = [];
+    if (w.wireType && w.wireType !== 'Custom' && WIRE_SPECS[w.wireType]) {
+      awgOptions = Object.keys(WIRE_SPECS[w.wireType].insOD);
+    }
+    html += '<td>';
+    if (w.wireType === 'Custom') {
+      html += '<span style="color:var(--text-secondary);font-size:0.75rem;">N/A</span>';
+    } else {
+      html += '<select onchange="wmSetAWG(' + i + ',this.value)">';
+      html += '<option value="">--</option>';
+      for (var a = 0; a < awgOptions.length; a++) {
+        html += '<option value="' + awgOptions[a] + '"' + (w.awg === awgOptions[a] ? ' selected' : '') + '>' + awgOptions[a] + ' AWG</option>';
+      }
+      html += '</select>';
+    }
+    html += '</td>';
+
+    // Wire OD
+    html += '<td>';
+    if (w.wireType === 'Custom') {
+      var custODVal = w.wireOD !== null && w.wireOD > 0 ? fmt(getDisplayValue(w.wireOD)) : '';
+      html += '<input type="number" class="wm-od-input" value="' + custODVal + '" min="0.01" step="0.01" oninput="wmSetCustomOD(' + i + ',this.value)" placeholder="OD">';
+    } else {
+      html += '<span>' + (w.wireOD !== null ? fmt(getDisplayValue(w.wireOD)) : '--') + '</span>';
+    }
+    html += '</td>';
+
+    // Color
+    html += '<td><select onchange="wmSetField(' + i + ',\'color\',this.value)">';
+    html += '<option value="">-- Color --</option>';
+    for (var c = 0; c < WIRE_COLORS_LIST.length; c++) {
+      html += '<option value="' + WIRE_COLORS_LIST[c] + '"' + (w.color === WIRE_COLORS_LIST[c] ? ' selected' : '') + '>' + WIRE_COLORS_LIST[c] + '</option>';
+    }
+    html += '</select></td>';
+
+    // Destination
+    html += '<td style="white-space:nowrap;">';
+    html += '<select onchange="wmSetDest(' + i + ',this.value)">';
+    html += '<option value="">-- Dest --</option>';
+    for (var d = 0; d < WIRE_DESTINATIONS.length; d++) {
+      html += '<option value="' + WIRE_DESTINATIONS[d] + '"' + (w.destination === WIRE_DESTINATIONS[d] ? ' selected' : '') + '>' + WIRE_DESTINATIONS[d] + '</option>';
+    }
+    html += '</select>';
+    if (w.destination === 'Custom') {
+      html += '<input type="text" class="wm-custom-input" value="' + escHtml(w.customDest) + '" oninput="wmSetField(' + i + ',\'customDest\',this.value)" placeholder="Custom...">';
+    }
+    html += '</td>';
+
+    // Function / Label
+    html += '<td><input type="text" class="wm-label-input" value="' + escHtml(w.label) + '" oninput="wmSetField(' + i + ',\'label\',this.value)" placeholder="e.g. 24VDC to solenoid 3"></td>';
+
+    // Standard
+    html += '<td style="font-size:0.72rem;">' + (w.standard || '--') + '</td>';
+
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+  document.getElementById('wm-table-wrap').innerHTML = html;
+}
+
+function wmSetType(idx, value) {
+  wireAssignments[idx].wireType = value;
+  var spec = WIRE_SPECS[value];
+
+  if (value === 'Custom') {
+    wireAssignments[idx].awg = '';
+    wireAssignments[idx].standard = 'Custom';
+    // Keep existing wireOD or set to null
+    if (!wireAssignments[idx].wireOD) wireAssignments[idx].wireOD = null;
+  } else if (spec) {
+    var awgs = Object.keys(spec.insOD);
+    wireAssignments[idx].awg = awgs.length > 0 ? awgs[0] : '';
+    wireAssignments[idx].wireOD = awgs.length > 0 ? spec.insOD[awgs[0]] : null;
+    wireAssignments[idx].standard = spec.standard;
+  } else {
+    wireAssignments[idx].awg = '';
+    wireAssignments[idx].wireOD = null;
+    wireAssignments[idx].standard = '';
+  }
+
+  renderWireMapTable();
+  updateWireMapResults();
+  recalcGeometryTabs();
+}
+
+function wmSetAWG(idx, value) {
+  wireAssignments[idx].awg = value;
+  var spec = WIRE_SPECS[wireAssignments[idx].wireType];
+  if (spec && spec.insOD[value]) {
+    wireAssignments[idx].wireOD = spec.insOD[value];
+  } else {
+    wireAssignments[idx].wireOD = null;
+  }
+  renderWireMapTable();
+  updateWireMapResults();
+  recalcGeometryTabs();
+}
+
+function wmSetCustomOD(idx, value) {
+  var mm = getInputMm(parseFloat(value) || 0);
+  wireAssignments[idx].wireOD = mm > 0 ? mm : null;
+  // Don't re-render table (user is typing in the input)
+  updateWireMapResults();
+  recalcGeometryTabs();
+}
+
+function wmSetDest(idx, value) {
+  wireAssignments[idx].destination = value;
+  if (value !== 'Custom') wireAssignments[idx].customDest = '';
+  renderWireMapTable(); // Need to show/hide custom input
+}
+
+function wmSetField(idx, field, value) {
+  wireAssignments[idx][field] = value;
+  // Don't re-render for text inputs (label, customDest) — user is typing
+}
+
+function updateWireMapResults() {
+  var ods = [];
+  for (var i = 0; i < wireAssignments.length; i++) {
+    if (wireAssignments[i].wireOD !== null && wireAssignments[i].wireOD > 0) {
+      ods.push(wireAssignments[i].wireOD);
+    }
+  }
+
+  var warningEl = document.getElementById('wm-warning');
+  var resultsEl = document.getElementById('wm-results');
+
+  if (ods.length === 0) {
+    warningEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+    return;
+  }
+
+  var sum = 0;
+  for (var i = 0; i < ods.length; i++) sum += ods[i];
+  var avgOD = sum / ods.length;
+  var minOD = ods[0];
+  var maxOD = ods[0];
+  for (var i = 1; i < ods.length; i++) {
+    if (ods[i] < minOD) minOD = ods[i];
+    if (ods[i] > maxOD) maxOD = ods[i];
+  }
+  var isMixed = Math.abs(maxOD - minOD) > 0.001;
+
+  // Show/hide warning
+  if (isMixed) {
+    warningEl.style.display = 'flex';
+    warningEl.className = 'wm-warning';
+    warningEl.innerHTML = '\u26A0\uFE0F Mixed wire diameters detected (min: ' + fmt(getDisplayValue(minOD)) + ' ' + diaUnit() + ', max: ' + fmt(getDisplayValue(maxOD)) + ' ' + diaUnit() + '). Using average OD for geometry calculations.';
+  } else {
+    warningEl.style.display = 'none';
+  }
+
+  // Show results
+  resultsEl.innerHTML =
+    '<div class="result-box"><div class="result-label">Average Wire OD</div><div class="result-value">' + fmt(getDisplayValue(avgOD)) + ' ' + diaUnit() + '</div><div class="result-detail">' + ods.length + ' of ' + wireAssignments.length + ' wires assigned</div></div>' +
+    '<div class="result-box"><div class="result-label">Total Wires</div><div class="result-value">' + wireAssignments.length + '</div></div>';
+
+  // Sync average OD to other tabs' wire diameter inputs
+  var displayVal = getDisplayValue(avgOD);
+  var roundedVal = Math.round(displayVal * 10000) / 10000;
+  var ids = ['lc-wireDia', 'll-wireDia', 'vz-wireDia', 'wt-wireDia', 'ex-wireDia'];
+  for (var i = 0; i < ids.length; i++) {
+    document.getElementById(ids[i]).value = roundedVal;
+  }
+}
+
+function recalcGeometryTabs() {
+  calcLayers();
+  calcLayLength();
+  calcElongation();
+  calcWeight();
+  drawVisualization();
+  buildExportTable();
+}
+
+function exportWireMapCSV() {
+  if (wireAssignments.length === 0) { showToast('No wire data to export'); return; }
+  var u = diaUnit();
+  var csv = 'Wire #,Layer,Wire Type,AWG,Wire OD (' + u + '),Color,Destination,Function / Label,Standard\n';
+  for (var i = 0; i < wireAssignments.length; i++) {
+    var w = wireAssignments[i];
+    var dest = w.destination === 'Custom' ? w.customDest : w.destination;
+    var od = w.wireOD !== null ? fmt(getDisplayValue(w.wireOD)) : '';
+    csv += w.wireNum + ',' +
+      (w.layer === 0 ? 'Core' : w.layer) + ',' +
+      csvEsc(w.wireType) + ',' +
+      w.awg + ',' +
+      od + ',' +
+      csvEsc(w.color) + ',' +
+      csvEsc(dest) + ',' +
+      csvEsc(w.label) + ',' +
+      csvEsc(w.standard) + '\n';
+  }
   copyToClipboard(csv);
 }
 
@@ -992,6 +1423,19 @@ function fmt(n) {
 function padR(s, len) {
   s = String(s);
   while (s.length < len) s += ' ';
+  return s;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function csvEsc(s) {
+  if (!s) return '';
+  if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
   return s;
 }
 
@@ -1031,6 +1475,7 @@ function showToast(msg) {
 }
 
 function recalcAll() {
+  buildWireMap();
   calcLayers();
   calcLayLength();
   calcElongation();
