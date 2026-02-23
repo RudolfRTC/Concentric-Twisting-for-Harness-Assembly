@@ -440,6 +440,243 @@ tr:hover td { background: var(--accent-light); }
   z-index: 10;
 }
 
+/* ── Twisted Groups ──────────────────────────────────────────── */
+.tg-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--bg-card);
+  position: relative;
+}
+
+.tg-group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tg-group-header input[type="text"] {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: var(--font);
+  outline: none;
+}
+
+.tg-group-header input[type="text"]:focus { border-color: var(--accent); }
+
+.tg-delete-btn {
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font);
+  transition: all 0.2s;
+}
+
+.tg-delete-btn:hover { background: var(--danger); color: white; }
+
+.tg-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tg-fields label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.tg-fields select,
+.tg-fields input[type="number"] {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-family: var(--mono);
+  outline: none;
+}
+
+.tg-fields select { cursor: pointer; font-family: var(--font); }
+
+.tg-shield-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.tg-shield-row label {
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.tg-shield-row select {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  padding: 3px 6px;
+  font-size: 0.78rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tg-wire-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.tg-wire-picker-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.tg-wire-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  font-family: var(--mono);
+}
+
+.tg-wire-chip:hover { border-color: var(--accent); }
+
+.tg-wire-chip.selected {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.tg-wire-chip.taken {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.tg-effective-od {
+  font-size: 0.82rem;
+  font-family: var(--mono);
+  color: var(--accent);
+  font-weight: 600;
+  padding: 6px 10px;
+  background: var(--accent-light);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.tg-halo-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: transparent;
+  display: inline-block;
+}
+
+/* ── Summary ──────────────────────────────────────────────────── */
+.summary-section {
+  margin-bottom: 24px;
+}
+
+.summary-section h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.spec-item {
+  padding: 12px;
+  background: var(--bg-input);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.spec-item-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.spec-item-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+.spec-item-detail {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ── Print ────────────────────────────────────────────────────── */
+@media print {
+  .header, .tabs, .btn, .btn-group, .toggle-btn, .toast,
+  .form-grid, .form-group, .input-wrap,
+  #panel-layers, #panel-laylength, #panel-elongation,
+  #panel-weight, #panel-visualizer, #panel-export,
+  #panel-wiremap, #panel-twistedgroups {
+    display: none !important;
+  }
+  #panel-summary { display: block !important; }
+  #panel-summary .btn-group { display: none !important; }
+  body { background: white; color: black; font-size: 10pt; }
+  .main { max-width: 100%; padding: 0; }
+  .card { border: none; box-shadow: none; padding: 0; }
+  table { font-size: 8pt; }
+  th, td { padding: 4px 8px; }
+  .result-box { border: 1px solid #ccc; }
+  .spec-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .header { padding: 12px 16px; }
@@ -478,6 +715,8 @@ tr:hover td { background: var(--accent-light); }
   <button class="tab" data-panel="visualizer" onclick="switchTab(this)">Visualizer</button>
   <button class="tab" data-panel="export" onclick="switchTab(this)">Export</button>
   <button class="tab" data-panel="wiremap" onclick="switchTab(this)">Wire Map</button>
+  <button class="tab" data-panel="twistedgroups" onclick="switchTab(this)">Twisted Groups</button>
+  <button class="tab" data-panel="summary" onclick="switchTab(this)">Summary</button>
 </div>
 
 <!-- Main Content -->
@@ -700,6 +939,28 @@ tr:hover td { background: var(--accent-light); }
     </div>
   </div>
 
+  <!-- ─── 8. TWISTED GROUPS ──────────────────────────────────────── -->
+  <div class="panel" id="panel-twistedgroups">
+    <div class="card">
+      <div class="card-title">Twisted Groups</div>
+      <div class="btn-group" style="margin-top:0;margin-bottom:16px;">
+        <button class="btn" onclick="addTwistedGroup()">+ Add Group</button>
+      </div>
+      <div id="tg-groups-container"></div>
+    </div>
+  </div>
+
+  <!-- ─── 9. SUMMARY ────────────────────────────────────────────── -->
+  <div class="panel" id="panel-summary">
+    <div class="card">
+      <div class="card-title">Harness Summary</div>
+      <div id="summary-content"></div>
+      <div class="btn-group">
+        <button class="btn" onclick="window.print()">Print / Export PDF</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Toast -->
@@ -791,6 +1052,24 @@ var WIRE_DESTINATIONS = [
 
 /* Wire Assignment Map state */
 var wireAssignments = [];
+
+/* ================================================================
+   TWISTED GROUPS
+   ================================================================ */
+var GROUP_TYPES = {
+  'Twisted Pair':   { mult: 2.000, defaultLay: 25 },
+  'Twisted Triple': { mult: 2.155, defaultLay: 30 },
+  'Twisted Quad':   { mult: 2.414, defaultLay: 35 },
+  'Shield Pair':    { mult: 2.000, defaultLay: 25, shieldWall: 0.3 }
+};
+
+var GROUP_HALO_COLORS = [
+  '#ff6b6b', '#48dbfb', '#feca57', '#ff9ff3', '#54a0ff',
+  '#5f27cd', '#01a3a4', '#f368e0', '#ff9f43', '#00d2d3'
+];
+
+var twistedGroups = [];
+var nextGroupId = 1;
 
 /* ================================================================
    UNIT CONVERSION HELPERS
@@ -1034,6 +1313,17 @@ function drawVisualization() {
   var bundleR = bundleOD(wireDia, numLayers) / 2;
   svg += '<circle cx="0" cy="0" r="' + bundleR + '" fill="none" stroke="' + (isDark ? '#4b5563' : '#d1d5db') + '" stroke-width="' + (r * 0.1) + '" stroke-dasharray="' + (r * 0.3) + '"/>';
 
+  // Get wire-to-group mapping for halo rings
+  var wireGroupMap = getWireGroupMap();
+
+  // Draw halo rings behind wires
+  for (var h = 0; h < wires.length; h++) {
+    var wg = wireGroupMap[h + 1]; // wireNum = index + 1
+    if (wg) {
+      svg += '<circle cx="' + wires[h].x.toFixed(4) + '" cy="' + wires[h].y.toFixed(4) + '" r="' + (r * 1.3).toFixed(4) + '" fill="none" stroke="' + wg.color + '" stroke-width="' + (r * 0.2).toFixed(4) + '" opacity="0.7"/>';
+    }
+  }
+
   // Draw wires
   wires.forEach(function(w) {
     var color = LAYER_COLORS[w.layer % LAYER_COLORS.length];
@@ -1043,12 +1333,21 @@ function drawVisualization() {
   svg += '</svg>';
   document.getElementById('vz-canvas').innerHTML = svg;
 
-  // Legend
+  // Legend - layer colors
   var legend = '';
   for (var i = 0; i <= numLayers; i++) {
     var label = i === 0 ? 'Core (1)' : 'Layer ' + i + ' (' + (6 * i) + ')';
     legend += '<div class="viz-legend-item"><div class="viz-legend-swatch" style="background:' + LAYER_COLORS[i % LAYER_COLORS.length] + '"></div>' + label + '</div>';
   }
+
+  // Legend - twisted group halos
+  for (var g = 0; g < twistedGroups.length; g++) {
+    if (twistedGroups[g].wireMembers.length > 0) {
+      var hc = GROUP_HALO_COLORS[g % GROUP_HALO_COLORS.length];
+      legend += '<div class="viz-legend-item"><span class="tg-halo-swatch" style="border-color:' + hc + '"></span>' + escHtml(twistedGroups[g].name) + '</div>';
+    }
+  }
+
   document.getElementById('vz-legend').innerHTML = legend;
 }
 
@@ -1410,6 +1709,332 @@ function exportWireMapCSV() {
 }
 
 /* ================================================================
+   8. TWISTED GROUPS
+   ================================================================ */
+function addTwistedGroup() {
+  twistedGroups.push({
+    id: nextGroupId++,
+    name: 'Group ' + twistedGroups.length,
+    type: 'Twisted Pair',
+    wireMembers: [],
+    layLength: 25,
+    direction: 'RH',
+    shield: false,
+    drainAWG: '26'
+  });
+  renderTwistedGroups();
+}
+
+function removeTwistedGroup(idx) {
+  twistedGroups.splice(idx, 1);
+  renderTwistedGroups();
+  drawVisualization();
+  buildSummary();
+}
+
+function tgSetField(idx, field, value) {
+  twistedGroups[idx][field] = value;
+  if (field === 'type') {
+    var gt = GROUP_TYPES[value];
+    if (gt) twistedGroups[idx].layLength = gt.defaultLay;
+  }
+  renderTwistedGroups();
+  if (field === 'wireMembers' || field === 'shield' || field === 'type') {
+    drawVisualization();
+    buildSummary();
+  }
+}
+
+function tgSetName(idx, value) {
+  twistedGroups[idx].name = value;
+  // Don't re-render (user is typing)
+}
+
+function tgSetLayLength(idx, value) {
+  var mm = getInputMm(parseFloat(value) || 0);
+  twistedGroups[idx].layLength = mm > 0 ? mm : 1;
+  // Don't re-render (user is typing)
+}
+
+function tgToggleWire(groupIdx, wireNum) {
+  var members = twistedGroups[groupIdx].wireMembers;
+  var pos = members.indexOf(wireNum);
+  if (pos >= 0) {
+    members.splice(pos, 1);
+  } else {
+    members.push(wireNum);
+  }
+  renderTwistedGroups();
+  drawVisualization();
+  buildSummary();
+}
+
+function tgToggleShield(idx) {
+  twistedGroups[idx].shield = !twistedGroups[idx].shield;
+  renderTwistedGroups();
+  buildSummary();
+}
+
+function calcGroupOD(group) {
+  var ods = [];
+  for (var i = 0; i < group.wireMembers.length; i++) {
+    var wn = group.wireMembers[i];
+    var wa = wireAssignments[wn - 1]; // wireNum is 1-indexed
+    if (wa && wa.wireOD !== null && wa.wireOD > 0) {
+      ods.push(wa.wireOD);
+    }
+  }
+  if (ods.length === 0) return null;
+
+  var avgOD = 0;
+  for (var i = 0; i < ods.length; i++) avgOD += ods[i];
+  avgOD /= ods.length;
+
+  var gt = GROUP_TYPES[group.type];
+  if (!gt) return null;
+
+  var od = gt.mult * avgOD;
+  if (gt.shieldWall) od += gt.shieldWall;
+  return od;
+}
+
+function getWireGroupMap() {
+  var map = {};
+  for (var g = 0; g < twistedGroups.length; g++) {
+    var color = GROUP_HALO_COLORS[g % GROUP_HALO_COLORS.length];
+    for (var w = 0; w < twistedGroups[g].wireMembers.length; w++) {
+      map[twistedGroups[g].wireMembers[w]] = { groupIdx: g, color: color };
+    }
+  }
+  return map;
+}
+
+function getTakenWires(excludeGroupIdx) {
+  var taken = {};
+  for (var g = 0; g < twistedGroups.length; g++) {
+    if (g === excludeGroupIdx) continue;
+    for (var w = 0; w < twistedGroups[g].wireMembers.length; w++) {
+      taken[twistedGroups[g].wireMembers[w]] = true;
+    }
+  }
+  return taken;
+}
+
+function renderTwistedGroups() {
+  var container = document.getElementById('tg-groups-container');
+  if (!container) return;
+
+  if (twistedGroups.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-secondary);padding:16px;">No twisted groups defined. Click "+ Add Group" to create one.</p>';
+    return;
+  }
+
+  var totalWires = wireAssignments.length;
+  var u = diaUnit();
+  var html = '';
+
+  for (var g = 0; g < twistedGroups.length; g++) {
+    var grp = twistedGroups[g];
+    var haloColor = GROUP_HALO_COLORS[g % GROUP_HALO_COLORS.length];
+    var taken = getTakenWires(g);
+    var groupOD = calcGroupOD(grp);
+
+    html += '<div class="tg-group" style="border-left:4px solid ' + haloColor + '">';
+
+    // Header
+    html += '<div class="tg-group-header">';
+    html += '<span class="tg-halo-swatch" style="border-color:' + haloColor + '"></span>';
+    html += '<input type="text" value="' + escHtml(grp.name) + '" oninput="tgSetName(' + g + ',this.value)" placeholder="Group name...">';
+    html += '<button class="tg-delete-btn" onclick="removeTwistedGroup(' + g + ')">Delete</button>';
+    html += '</div>';
+
+    // Fields
+    html += '<div class="tg-fields">';
+
+    // Type
+    html += '<div><label>Type</label><select onchange="tgSetField(' + g + ',\'type\',this.value)">';
+    var typeKeys = Object.keys(GROUP_TYPES);
+    for (var t = 0; t < typeKeys.length; t++) {
+      html += '<option value="' + typeKeys[t] + '"' + (grp.type === typeKeys[t] ? ' selected' : '') + '>' + typeKeys[t] + '</option>';
+    }
+    html += '</select></div>';
+
+    // Lay Length
+    html += '<div><label>Lay Length (' + u + ')</label>';
+    html += '<input type="number" value="' + fmt(getDisplayValue(grp.layLength)) + '" min="1" step="1" oninput="tgSetLayLength(' + g + ',this.value)"></div>';
+
+    // Direction
+    html += '<div><label>Direction</label>';
+    html += '<div class="lay-toggle">';
+    html += '<button class="' + (grp.direction === 'RH' ? 'active' : '') + '" onclick="tgSetField(' + g + ',\'direction\',\'RH\')">RH</button>';
+    html += '<button class="' + (grp.direction === 'LH' ? 'active' : '') + '" onclick="tgSetField(' + g + ',\'direction\',\'LH\')">LH</button>';
+    html += '</div></div>';
+
+    html += '</div>'; // tg-fields
+
+    // Shield row
+    html += '<div class="tg-shield-row">';
+    html += '<label><input type="checkbox"' + (grp.shield ? ' checked' : '') + ' onchange="tgToggleShield(' + g + ')"> Overall Shield</label>';
+    if (grp.shield) {
+      html += '<label>Drain AWG: <select onchange="tgSetField(' + g + ',\'drainAWG\',this.value)">';
+      var drainOpts = ['28', '26', '24'];
+      for (var d = 0; d < drainOpts.length; d++) {
+        html += '<option value="' + drainOpts[d] + '"' + (grp.drainAWG === drainOpts[d] ? ' selected' : '') + '>' + drainOpts[d] + ' AWG</option>';
+      }
+      html += '</select></label>';
+    }
+    html += '</div>';
+
+    // Wire picker
+    html += '<div class="tg-wire-picker">';
+    html += '<span class="tg-wire-picker-label">Wire Members</span>';
+    for (var w = 1; w <= totalWires; w++) {
+      var isMember = grp.wireMembers.indexOf(w) >= 0;
+      var isTaken = taken[w] === true;
+      var cls = 'tg-wire-chip';
+      if (isMember) cls += ' selected';
+      else if (isTaken) cls += ' taken';
+
+      if (isTaken && !isMember) {
+        html += '<span class="' + cls + '" title="Used by another group">' + w + '</span>';
+      } else {
+        html += '<span class="' + cls + '" onclick="tgToggleWire(' + g + ',' + w + ')">' + w + '</span>';
+      }
+    }
+    html += '</div>';
+
+    // Effective OD
+    if (groupOD !== null) {
+      html += '<div class="tg-effective-od">Effective OD: ' + fmt(getDisplayValue(groupOD)) + ' ' + u + '</div>';
+    } else {
+      html += '<div style="font-size:0.8rem;color:var(--text-secondary);">Assign wire types in Wire Map to see effective OD</div>';
+    }
+
+    html += '</div>'; // tg-group
+  }
+
+  container.innerHTML = html;
+}
+
+/* ================================================================
+   9. SUMMARY
+   ================================================================ */
+function buildSummary() {
+  var container = document.getElementById('summary-content');
+  if (!container) return;
+
+  var u = diaUnit();
+  var html = '';
+
+  // 1. Twisted Groups Summary
+  html += '<div class="summary-section">';
+  html += '<h3>Twisted Groups</h3>';
+  if (twistedGroups.length === 0) {
+    html += '<p style="color:var(--text-secondary)">No twisted groups defined.</p>';
+  } else {
+    html += '<div class="table-wrap"><table><thead><tr><th>Group Name</th><th>Type</th><th>Wires</th><th>Lay Length (' + u + ')</th><th>Direction</th><th>Shield</th><th>Effective OD (' + u + ')</th></tr></thead><tbody>';
+    for (var g = 0; g < twistedGroups.length; g++) {
+      var grp = twistedGroups[g];
+      var groupOD = calcGroupOD(grp);
+      html += '<tr>';
+      html += '<td>' + escHtml(grp.name) + '</td>';
+      html += '<td>' + grp.type + '</td>';
+      html += '<td>[' + grp.wireMembers.join(', ') + ']</td>';
+      html += '<td>' + fmt(getDisplayValue(grp.layLength)) + '</td>';
+      html += '<td>' + grp.direction + '</td>';
+      html += '<td>' + (grp.shield ? 'Yes (' + grp.drainAWG + ' AWG drain)' : 'No') + '</td>';
+      html += '<td>' + (groupOD !== null ? fmt(getDisplayValue(groupOD)) : '--') + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+
+  // 2. Complete Wire Schedule
+  html += '<div class="summary-section">';
+  html += '<h3>Complete Wire Schedule</h3>';
+  if (wireAssignments.length === 0) {
+    html += '<p style="color:var(--text-secondary)">No wires configured. Use the Wire Map tab.</p>';
+  } else {
+    html += '<div class="table-wrap"><table><thead><tr><th>Wire#</th><th>Layer</th><th>Wire Type</th><th>AWG</th><th>OD (' + u + ')</th><th>Color</th><th>Destination</th><th>Function</th><th>Standard</th></tr></thead><tbody>';
+    for (var i = 0; i < wireAssignments.length; i++) {
+      var w = wireAssignments[i];
+      var dest = w.destination === 'Custom' ? w.customDest : w.destination;
+      html += '<tr>';
+      html += '<td>' + w.wireNum + '</td>';
+      html += '<td>' + (w.layer === 0 ? 'Core' : w.layer) + '</td>';
+      html += '<td>' + escHtml(w.wireType || '--') + '</td>';
+      html += '<td>' + (w.awg || '--') + '</td>';
+      html += '<td>' + (w.wireOD !== null ? fmt(getDisplayValue(w.wireOD)) : '--') + '</td>';
+      html += '<td>' + escHtml(w.color || '--') + '</td>';
+      html += '<td>' + escHtml(dest || '--') + '</td>';
+      html += '<td>' + escHtml(w.label || '--') + '</td>';
+      html += '<td style="font-size:0.72rem;">' + escHtml(w.standard || '--') + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+
+  // 3. Harness Specification
+  var numLayers = parseInt(document.getElementById('lc-numLayers').value) || 1;
+  var wireDia = getInputMm(parseFloat(document.getElementById('lc-wireDia').value) || 0);
+  var bundleODVal = bundleOD(wireDia, numLayers);
+  var sleeveWall = 1.0; // 1mm default
+  var sleevedOD = bundleODVal + 2 * sleeveWall;
+  var conduitID = 1.25 * sleevedOD;
+
+  // Total conductor count (wires + drain wires from shielded groups)
+  var totalConductors = wireAssignments.length;
+  for (var g = 0; g < twistedGroups.length; g++) {
+    if (twistedGroups[g].shield) totalConductors += 1;
+  }
+
+  // Applicable standards (unique)
+  var standardsMap = {};
+  for (var i = 0; i < wireAssignments.length; i++) {
+    if (wireAssignments[i].standard && wireAssignments[i].standard !== 'Custom') {
+      standardsMap[wireAssignments[i].standard] = true;
+    }
+  }
+  var standardsList = Object.keys(standardsMap);
+
+  // Temperature and voltage ratings (lowest values)
+  var minTemp = null;
+  var minVoltage = null;
+  for (var i = 0; i < wireAssignments.length; i++) {
+    var wt = wireAssignments[i].wireType;
+    if (wt && WIRE_SPECS[wt]) {
+      var spec = WIRE_SPECS[wt];
+      if (spec.temp !== null) {
+        if (minTemp === null || spec.temp < minTemp) minTemp = spec.temp;
+      }
+      if (spec.voltage !== null) {
+        if (minVoltage === null || spec.voltage < minVoltage) minVoltage = spec.voltage;
+      }
+    }
+  }
+
+  html += '<div class="summary-section">';
+  html += '<h3>Harness Specification</h3>';
+  html += '<div class="spec-grid">';
+
+  html += '<div class="spec-item"><div class="spec-item-label">Overall Bundle OD</div><div class="spec-item-value">' + fmt(getDisplayValue(bundleODVal)) + ' ' + u + '</div></div>';
+  html += '<div class="spec-item"><div class="spec-item-label">OD with Sleeving</div><div class="spec-item-value">' + fmt(getDisplayValue(sleevedOD)) + ' ' + u + '</div><div class="spec-item-detail">1 mm wall sleeving</div></div>';
+  html += '<div class="spec-item"><div class="spec-item-label">Total Conductor Count</div><div class="spec-item-value">' + totalConductors + '</div>' + (totalConductors !== wireAssignments.length ? '<div class="spec-item-detail">Includes ' + (totalConductors - wireAssignments.length) + ' drain wire(s)</div>' : '') + '</div>';
+  html += '<div class="spec-item"><div class="spec-item-label">Twisted Group Count</div><div class="spec-item-value">' + twistedGroups.length + '</div></div>';
+  html += '<div class="spec-item"><div class="spec-item-label">Applicable Standards</div><div class="spec-item-value" style="font-size:0.85rem">' + (standardsList.length > 0 ? standardsList.join(', ') : '--') + '</div></div>';
+  html += '<div class="spec-item"><div class="spec-item-label">Temperature Rating</div><div class="spec-item-value">' + (minTemp !== null ? minTemp + '\u00B0C' : '--') + '</div><div class="spec-item-detail">Lowest rated wire</div></div>';
+  html += '<div class="spec-item"><div class="spec-item-label">Voltage Rating</div><div class="spec-item-value">' + (minVoltage !== null ? minVoltage + 'V' : '--') + '</div><div class="spec-item-detail">Lowest rated wire</div></div>';
+  html += '<div class="spec-item"><div class="spec-item-label">Recommended Conduit ID</div><div class="spec-item-value">' + fmt(getDisplayValue(conduitID)) + ' ' + u + '</div><div class="spec-item-detail">1.25 &times; sleeved OD</div></div>';
+
+  html += '</div>'; // spec-grid
+  html += '</div>'; // summary-section
+
+  container.innerHTML = html;
+}
+
+/* ================================================================
    HELPERS
    ================================================================ */
 function fmt(n) {
@@ -1482,6 +2107,8 @@ function recalcAll() {
   calcWeight();
   drawVisualization();
   buildExportTable();
+  renderTwistedGroups();
+  buildSummary();
 }
 
 /* ================================================================
