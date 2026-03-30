@@ -1,44 +1,70 @@
-## PCAN FD firmware for STM32G431 based boards
+# FD-CAN-Router
 
-目标硬件:
-* CANable2.0硬件，或跟它相似的、非标版本（带8MHz外部晶振、LED管脚有差异）的USB CAN模块。
-* MCU型号为：STM32G431CBT6/STM32G431CBU6
+Firmware for STM32G431-based USB to CAN FD nodes using a PEAK-compatible USB protocol.
 
-管脚:
-|PIN/PINS|DESCRIPTION|
-| ------ | ------ |
-|PA15/PA6|STATUS LED|
-|PA0/PA5|WORK LED|
-|PB9&PB8|TXD/RXD CAN|
-|PA11&PA12 |USB FS DM/DP|
+This repository contains the firmware currently used for a 4-node setup where each MCU appears as an individual PCAN-compatible adapter with a fixed Device ID.
 
-特色:
-- 支持CAN FD
-- 适配PCAN-View的大部分功能（支持CAN FD、设置时钟频率、波特率/采样点、ISO/Non-ISO模式、仅侦听模式等）
+## Hardware target
 
-限制:
-- Some protocol specific messages not implemented yet
-- 上位机周期发送测试“开启"和"停止"不断地切换，USB有丢数据现象，导致给CAN控制器发送的数据少了
-- 未支持硬件过滤
+- MCU: `STM32G431CBT6` / `STM32G431CBU6`
+- Typical board style: `CANable 2.x` or similar STM32G431 USB-CAN boards
+- USB: Full Speed
+- CAN: 1 x FDCAN per MCU
 
-编译方法:
-- 1，ubuntu等linux主机  
-a). 安装arm-none-eabi-gcc交叉编译环境，譬如ARM官网上的gcc-arm-none-eabi-7-2018-q2-update等  
-b). 使用 make 、 make pcanfd 或者 make canable2进行编译  
-c). 使用 make clean清理工程  
+## Current firmware behavior
 
-- 2，windows主机  
-推荐使用官方“STM32CubeIDE”的最新版本进行编译和仿真。  
-以“Create a new Makefile project in a directory containing existing code”方式创建工程。  
-在Makefile中修改“DEBUG=1”（增加“-g”编译选项）后，搭配ST-Link仿真器还能下断点和单步调试。
-另外，因BOOT0管脚跟CAN RX管脚复用，使用SWD仿真时最好先使用“STM32 ST-LINK Utility”工具将BOOT0管脚功能屏蔽掉，使得程序总是从Flash启动，方便调试。具体参考doc文件夹的资料。  
+- Normal CAN mode enabled
+- PEAK-compatible USB endpoint layout for the single-channel build
+- Full-speed USB command reassembly implemented
+- No debug UART required
+- Fixed Device ID mapping based on MCU UID
 
-须知:
-- 本工程从https://github.com/moonglow/pcan_pro_x 移植过来。
-- CANFD驱动源自https://github.com/Elmue/CANable-2.5-firmware-Slcan-and-Candlelight.git
-关于CANable-2.5请参考https://netcult.ch/elmue/CANable%20Firmware%20Update/
-- ISO/Non-ISO模式设置的协议解析和STM32运行时切换系统时钟思路参考https://bbs.21ic.com/icview-3491240-1-1.html
+## Device ID mapping
 
-License
-----
-WTFPL
+The firmware maps each board to a stable `device_id` using the STM32 UID low word:
+
+- `0x00480028` -> `0x001111FF`
+- `0x0047001E` -> `0x002222FF`
+- `0x00480017` -> `0x003333FF`
+- `0x00490052` -> `0x004444FF`
+
+## Build
+
+Windows with STM32CubeIDE toolchain:
+
+```powershell
+make canable2
+```
+
+Artifacts are generated in:
+
+```text
+build-pcanfd_canable2/
+```
+
+Main binary:
+
+```text
+build-pcanfd_canable2/pcanfd_canable2_.bin
+```
+
+## Flash
+
+Example using STM32CubeProgrammer CLI:
+
+```powershell
+& 'C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe' `
+  -c port=SWD mode=UR `
+  -w 'build-pcanfd_canable2/pcanfd_canable2_.bin' 0x08000000 `
+  -v -rst
+```
+
+## Repository notes
+
+- This repo is based on earlier PCAN-USB FD compatible STM32G431 firmware work
+- The current focus is a practical multi-node router setup, not a generic upstream distribution
+- Some diagnostic code is still present for SWD-side inspection during bring-up
+
+## License
+
+See [LICENSE](LICENSE).
