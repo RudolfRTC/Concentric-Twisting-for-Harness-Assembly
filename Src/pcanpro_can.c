@@ -169,26 +169,25 @@ static int _can_send( FDCAN_HandleTypeDef *p_can, struct t_can_msg *p_msg )
 static void pcan_can_flush_tx( int bus )
 {
   struct t_can_dev *p_dev = &can_dev_array[bus];
-  struct t_can_msg *p_msg;
-
-  /* empty fifo */
-  if( p_dev->tx_head == p_dev->tx_tail )
-    return;
 
   if( !p_dev->dev )
     return;
-  
-  p_msg = &p_dev->tx_fifo[p_dev->tx_tail];
-  if( _can_send( p_dev->dev, p_msg ) < 0 )
-    return;
 
-  if( p_dev->tx_isr )
+  /* Fill the hardware TX FIFO in one poll pass to reduce loop-induced jitter. */
+  while( p_dev->tx_head != p_dev->tx_tail )
   {
-    (void)p_dev->tx_isr( bus, p_msg );
-  }
+    struct t_can_msg *p_msg = &p_dev->tx_fifo[p_dev->tx_tail];
+    if( _can_send( p_dev->dev, p_msg ) < 0 )
+      break;
 
-  /* update fifo index */
-  p_dev->tx_tail = (p_dev->tx_tail+1)%(CAN_TX_FIFO_SIZE-1);
+    if( p_dev->tx_isr )
+    {
+      (void)p_dev->tx_isr( bus, p_msg );
+    }
+
+    /* update fifo index */
+    p_dev->tx_tail = (p_dev->tx_tail+1)%(CAN_TX_FIFO_SIZE-1);
+  }
 }
 
 int pcan_can_write( int bus, struct t_can_msg *p_msg )

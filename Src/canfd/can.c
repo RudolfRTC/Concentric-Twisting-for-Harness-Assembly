@@ -319,7 +319,7 @@ void can_process(uint32_t tick_now)
     // Instead of sending a Tx Event to the host in the moment when the processor has really sent the packet to the CAN bus
     // they have sent a fake event immediately after dispatching the packet, no matter if it really was sent or not.
     FDCAN_TxEventFifoTypeDef tx_event;
-    if (HAL_FDCAN_GetTxEvent(&can_handle, &tx_event) == HAL_OK)
+    while (HAL_FDCAN_GetTxEvent(&can_handle, &tx_event) == HAL_OK)
     {
         g_fw_diag.can_tx_events++;
         // Here tx_event.EventType is FDCAN_TX_EVENT if auto retransmission is enabled.
@@ -353,7 +353,7 @@ void can_process(uint32_t tick_now)
     // Rx FIFO 0 receives all packets that have been accepted by the filters -> write to the USB buffer
     // Rx FIFO 0 and Rx FIFO 1 can store up to three packets each.
     FDCAN_RxHeaderTypeDef rx_header;
-    if (HAL_FDCAN_GetRxMessage(&can_handle, FDCAN_RX_FIFO0, &rx_header, can_data_buf) == HAL_OK)
+    while (HAL_FDCAN_GetRxMessage(&can_handle, FDCAN_RX_FIFO0, &rx_header, can_data_buf) == HAL_OK)
     {
         g_fw_diag.can_rx_fifo0++;
         //buf_store_rx_packet(&rx_header, can_data_buf);
@@ -374,7 +374,7 @@ void can_process(uint32_t tick_now)
 
     // Rx FIFO 1 receives all packets that have been rejected by the filters -> only flash the blue LED
     // Rx FIFO 0 and Rx FIFO 1 can store up to three packets each.
-    if (HAL_FDCAN_GetRxMessage(&can_handle, FDCAN_RX_FIFO1, &rx_header, can_data_buf) == HAL_OK)
+    while (HAL_FDCAN_GetRxMessage(&can_handle, FDCAN_RX_FIFO1, &rx_header, can_data_buf) == HAL_OK)
     {
         g_fw_diag.can_rx_fifo1++;
         // for bus load calculation
